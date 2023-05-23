@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.text.Font?>
+
+<TextArea fx:id="log" editable="false" style="-fx-control-inner-background: #1e1e1e; -fx-text-fill: white;" text="sdfsd" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gr.uop.Controller">
+   <font>
+      <Font name="System Bold" size="20.0" />
+   </font>
+</TextArea>

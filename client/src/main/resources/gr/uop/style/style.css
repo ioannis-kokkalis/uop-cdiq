@@ -1,0 +1,73 @@
+* {
+    /* ||| Color Variables */
+
+	vcolor-primary: #ab7b0d;
+    vcolor-accent: #ddc07e;
+	vcolor-text: #1c1502;
+    vcolor-background: #fbeed0;
+    
+    /* ||| Color Constants */
+
+    color-state-calling: #00962b;
+    color-state-available: #0082b1;
+    color-state-paused: #c35100;
+    color-state-occupied: #a30000;
+
+    color-background-idle: vcolor-background;
+    color-background-busy: vcolor-accent;
+    color-background-focus: vcolor-primary;
+
+    color-text: vcolor-text;
+    color-text-alternative: vcolor-background;
+
+	/* ||| General Setup */
+
+	-fx-font-family: "Century Gothic";
+    -fx-font-size: 20px;
+    -fx-font-weight: 700;
+	-fx-text-fill: color-text;
+}
+
+/* ||| Defaults */
+
+.button {
+    -fx-color: color-background-focus;
+    -fx-text-fill: color-text;
+}
+
+/* ||| Breathing Space */
+
+.padding-much	{ -fx-padding: 24px; }
+.padding-less	{ -fx-padding: 16px; }
+
+.spacing-much	{ -fx-spacing: 24px; }
+.spacing-less	{ -fx-spacing: 16px; }
+
+.gaping-h-much  { -fx-hgap: 24px; }
+.gaping-v-much  { -fx-vgap: 24px; }
+.gaping-h-less  { -fx-hgap: 16px; }
+.gaping-v-less  { -fx-vgap: 16px; }
+
+/* ||| Coloring */
+
+.color-background-idle	{ -fx-background-color: color-background-idle; }
+.color-background-busy	{ -fx-background-color: color-background-busy; }
+
+.color-text { -fx-text-fill: color-text; }
+.color-text-alternative { -fx-text-fill: color-text-alternative; }
+
+/* ||| Fonts */
+
+.font-size-XL	{ -fx-font-size: 30px; }
+.font-size-L	{ -fx-font-size: 26px; }
+.font-size-M	{ -fx-font-size: 20px; }
+.font-size-S	{ -fx-font-size: 16px; }
+
+/* ||| Misc */
+
+.separator *.line   {
+    -fx-border-style: solid;
+    -fx-border-width: 1px;
+    -fx-border-radius: 100%;
+    -fx-border-color: color-background-focus;
+}
