@@ -2,6 +2,7 @@ package gr.uop;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.ResourceBundle;
 import java.util.regex.Pattern;
@@ -101,9 +102,10 @@ public class ControllerLauncher implements Initializable {
 
             App.replaceCloseWithOneTimeBackToLauncher();
 
-            var requestSubscribe = new JSONObject();
-            requestSubscribe.put("request", "subscribe");
-            requestSubscribe.put("role", asRole.toString());
+            var fields = new HashMap<String, String>();
+            fields.put("request", "subscribe");
+            fields.put("role", asRole.toString());
+            var requestSubscribe = new JSONObject(fields);
             
             App.NETWORK.send(Packet.encode(requestSubscribe));
             onSuccessRun.run();
