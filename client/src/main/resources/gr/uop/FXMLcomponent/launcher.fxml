@@ -13,12 +13,8 @@
          <children>
             <Separator layoutX="34.0" layoutY="338.0" />
             <Button fx:id="buttonS" mnemonicParsing="false" onAction="#openSecretary" text="Secretary" />
-            <Separator />
-            <Button fx:id="buttonML" mnemonicParsing="false" onAction="#openManagerLibrary" text="Manager (Library)" />
-            <Button fx:id="buttonMOA" mnemonicParsing="false" onAction="#openManagerOpenArea" text="Manager (Open Area)" />
-            <Separator />
+            <Button fx:id="buttonM" mnemonicParsing="false" onAction="#openManager" text="Manager" />
             <Button fx:id="buttonPM" mnemonicParsing="false" onAction="#openPublicMonitor" text="Public Monitor" />
-            <Separator layoutX="34.0" layoutY="167.0" />
             <Separator layoutX="34.0" layoutY="224.0" />
             <TextField fx:id="inputIP" alignment="CENTER" promptText="host:port" />
             <Separator layoutX="34.0" layoutY="243.0" />

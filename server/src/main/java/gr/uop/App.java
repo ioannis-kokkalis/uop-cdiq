@@ -1,65 +1,49 @@
 package gr.uop;
 
-import java.io.IOException;
-import java.util.Optional;
+import java.util.Scanner;
 
-import gr.uop.network.Server;
-import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
+import gr.uop.network.Network;
+import gr.uop.network.NetworkException;
 
-/**
- * JavaFX App
- */
-public class App extends Application {
-
-    public static Server SERVER;
-    public static Controller LOGGER;
-    public static Stage stage;
-
-    @Override
-    public void start(Stage stage) throws IOException {
-        App.stage = stage;
-
-        stage.setTitle("Career Day Server | Do NOT close this window until the end of the event!!!");
-
-        try { 
-            stage.setScene(new Scene(new FXMLLoader(App.class.getResource("log.fxml")).load()));
-        }
-        catch (Exception e) { }
-    
-        stage.setOnCloseRequest(event -> {
-            var dialog = new Alert(AlertType.CONFIRMATION);
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(stage);
-            dialog.setHeaderText("Server Termination Confirmation");
-            dialog.setContentText("THIS ACTION WILL TERMINATE THE SERVER!!!");
-
-            Optional<ButtonType> buttonPressed = dialog.showAndWait();
-
-            if( buttonPressed.get().equals(ButtonType.OK) ) {
-                App.SERVER.shutdown();
-            }
-            else {
-                event.consume();
-            }
-        });
-
-        stage.show();
-
-        App.SERVER = new Server();
-        App.SERVER.start();
-
-        // TODO add backup system for model current state
-    }
+public class App {
 
     public static void main(String[] args) {
-        launch();
+        Network network = null;
+        // Model model = null;
+        try {
+            int port = Integer.parseInt(args[0]);
+
+            // model = new Model(); // attempt to load from local backup?
+            // System.out.println("Model started.");
+
+            network = new Network(port);
+            System.out.println("Network started on port \"" + port + "\".");
+
+            CLI();
+        } catch (NumberFormatException e) {
+            System.err.println("Invlaid port input. Given \"" + args[0] + ". Check pom.xml");
+        } catch (NetworkException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            if (network != null)
+                network.shutdown();
+            // if (model != null)
+            //     model.shutdown();
+        }
+    }
+
+    public static void CLI() {
+        var scanner = new Scanner(System.in);
+
+        while (scanner.hasNext()) {
+            if (scanner.nextLine().equals("exit")) {
+                System.out.println("Exiting...");
+                break;
+            } else
+                System.out.println("Enter 'exit' to close the server properly.");
+        }
+
+        scanner.close();
     }
 
 }

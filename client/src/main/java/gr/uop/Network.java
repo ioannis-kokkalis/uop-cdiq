@@ -3,12 +3,35 @@ package gr.uop;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 public class Network {
+
+    public class Packet {
+
+        public static String encode(JSONObject message) {
+            return message.toJSONString();
+        }
+
+        public static JSONObject decode(String message) {
+            JSONObject decoded = null;
+
+            try {
+                decoded = (JSONObject) new JSONParser().parse(message);
+            } catch (ParseException e) {
+                System.err.println("Failed to decode client message: " + message);
+            }
+
+            return decoded;
+        }
+
+    }
 
     private final static Charset MESSAGES_ENCODING = StandardCharsets.UTF_16;
 
@@ -24,7 +47,7 @@ public class Network {
         this.startListeningForMessages();
     }
 
-/**
+    /**
      * *In case server is disconnected, does nothing.
      * @param message to send
      */
@@ -45,8 +68,8 @@ public class Network {
      */
     private void startListeningForMessages() {
         new Thread(() -> {
-            
-            while( this.fromServer.hasNext() )
+
+            while (this.fromServer.hasNext())
                 this.received(fromServer.nextLine());
             // socket closed, either by client or server, should be client side 99% of the times
             // TODO notify the app that this client has been disconnected | maybe? call received("disconnected") and handle it there?
@@ -61,5 +84,5 @@ public class Network {
             e.printStackTrace();
         }
     }
-    
+
 }

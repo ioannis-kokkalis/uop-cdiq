@@ -9,48 +9,65 @@ import java.util.Scanner;
 
 public class Client {
 
-    private final static Charset MESSAGES_ENCODING = StandardCharsets.UTF_16;
+    private final static Charset ENCODING = StandardCharsets.UTF_16;
 
     private final Socket socket;
     private final PrintWriter toClient;
     private final Scanner fromClient;
 
-    public Client(Socket socket) throws IOException {
+    private final TaskProcessor taskProcessor;
+    private final Subscribers subscribers;
+
+    public Client(Socket socket, TaskProcessor taskProcessor, Subscribers subscribers) throws IOException {
         this.socket = socket;
-        this.toClient = new PrintWriter(this.socket.getOutputStream(), true, MESSAGES_ENCODING);
-        this.fromClient = new Scanner(this.socket.getInputStream(), MESSAGES_ENCODING);
+        this.toClient = new PrintWriter(this.socket.getOutputStream(), true, ENCODING);
+        this.fromClient = new Scanner(this.socket.getInputStream(), ENCODING);
 
-        this.startListeningForMessages();
-    }
+        this.taskProcessor = taskProcessor;
+        this.subscribers = subscribers;
 
-    /**
-     * *In case client is disconnected, does nothing.
-     * @param message to send
-     */
-    public void send(String message) {
-        toClient.println(message);
-    }
-
-    /**
-     * @param message that arrived from the client
-     */
-    private void received(String message) {
-        System.out.println("Proccessing: |" + message + "|");
-        // TODO process message
-    }
-
-    /**
-     * Calls {@link #received(String)} for each message that arrives.
-     */
-    private void startListeningForMessages() {
         new Thread(() -> {
-            
-            while( this.fromClient.hasNext() )
-                this.received(fromClient.nextLine());
-            // socket closed, either by client or server, should be client side 99% of the times
-            // TODO notify the server that this client has been disconnected | maybe? call received("disconnected") and handle it there?
-
+            while (this.fromClient.hasNextLine()) {
+                received(this.fromClient.nextLine());
+            }
+            System.out.println("Client disconnected.");
         }).start();
+    }
+
+    public void disconnect() {
+        try {
+            this.socket.close();
+        } catch (IOException e) {
+
+        }
+    }
+
+    public void send(String message) {
+        this.toClient.println(message);
+    }
+
+    private void received(String message) {
+        Task task = null;
+
+        var decoded = Packet.decode(message); System.out.println(decoded);
+        boolean receivedValid = decoded != null && decoded.get("request") != null;
+
+        if(!receivedValid) {
+            System.err.println("Received invlalid client message.");
+            return;
+        }
+
+        switch(decoded.get("request").toString()) {
+            case "subscribe": task = () -> {
+                System.out.println("Subscribe: " + decoded.toString());
+            }; break;
+
+            default: task = () -> {
+                System.out.println("Received: " + message);
+            };
+        }
+
+        this.taskProcessor.process(task);
     }
 
 }

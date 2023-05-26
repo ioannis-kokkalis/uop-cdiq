@@ -49,7 +49,7 @@ public class App extends Application {
             root = new FXMLLoader(App.class.getResource("FXMLcomponent/" + component + ".fxml")).load(); 
         }
         catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             Label oops = new Label("FXML component \"" + component + ".fxml\" could not load.");
             oops.setPadding(new Insets(64, 128, 64, 128));
             root = oops;

@@ -4,22 +4,40 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.ResourceBundle;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.json.simple.JSONObject;
+
+import gr.uop.Network.Packet;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Alert.AlertType;
 import javafx.stage.Modality;
 
 public class ControllerLauncher implements Initializable {
     
+    private enum Role {
+        SECRETARY("secretary"),
+        MANAGER("manager"),
+        PUBLIC_MONITOR("public-monitor");
+
+        private final String value;
+
+        private Role(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return value;
+        }
+    }
+
     @FXML private Button buttonS;
-    @FXML private Button buttonML;
-    @FXML private Button buttonMOA;
+    @FXML private Button buttonM;
     @FXML private Button buttonPM;
     private LinkedList<Button> clientOptionButtons = new LinkedList<>();
 
@@ -30,8 +48,7 @@ public class ControllerLauncher implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         clientOptionButtons.add(buttonS);
-        clientOptionButtons.add(buttonML);
-        clientOptionButtons.add(buttonMOA);
+        clientOptionButtons.add(buttonM);
         clientOptionButtons.add(buttonPM);
         clientOptionButtons.forEach(b -> b.setDisable(true));
 
@@ -43,30 +60,24 @@ public class ControllerLauncher implements Initializable {
     }
     
     public void openSecretary() {
-        connect("secretary", () -> {
+        connect(Role.SECRETARY, () -> {
             App.setRoot("secretary");
         });
     }
     
-    public void openManagerOpenArea() {
-        connect("managerout", () -> {
-            App.setRoot("manager");
-        });
-    }
-    
-    public void openManagerLibrary() {
-        connect("managerlib", () -> {
+    public void openManager() {
+        connect(Role.MANAGER, () -> {
             App.setRoot("manager");
         });
     }
     
     public void openPublicMonitor() {
-        connect("publicmonitor", () -> {
+        connect(Role.PUBLIC_MONITOR, () -> {
             App.setRoot("public-monitor");
         });
     }
 
-    public void connect(String asRole, Runnable onSuccessRun) {
+    private void connect(Role asRole, Runnable onSuccessRun) {
         inputIP.setDisable(true);
         App.lastIPPortGiven = inputIP.getText();
         
@@ -89,7 +100,12 @@ public class ControllerLauncher implements Initializable {
             clientOptionButtons.forEach(b -> b.setDisable(true));
 
             App.replaceCloseWithOneTimeBackToLauncher();
-            App.NETWORK.send("subscribe:" + asRole);
+
+            var requestSubscribe = new JSONObject();
+            requestSubscribe.put("request", "subscribe");
+            requestSubscribe.put("role", asRole.toString());
+            
+            App.NETWORK.send(Packet.encode(requestSubscribe));
             onSuccessRun.run();
         }
         else {
