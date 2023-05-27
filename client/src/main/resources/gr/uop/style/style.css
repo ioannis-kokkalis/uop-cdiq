@@ -4,7 +4,7 @@
 	vcolor-primary: #ab7b0d;
     vcolor-accent: #ddc07e;
 	vcolor-text: #1c1502;
-    vcolor-background: #fbeed0;
+    vcolor-background: #fbeed0; 
     
     /* ||| Color Constants */
 
@@ -70,4 +70,9 @@
     -fx-border-width: 1px;
     -fx-border-radius: 100%;
     -fx-border-color: color-background-focus;
+}
+
+.button-secondary   {
+    -fx-color: color-background-busy;
+    -fx-text-fill: color-text;
 }
