@@ -74,7 +74,7 @@ public class Network {
         private void received(String message) {
             Task task = null;
     
-            var decoded = Packet.decode(message); System.out.println(decoded);
+            var decoded = Packet.decode(message);
             boolean receivedValid = decoded != null && decoded.get("request") != null;
     
             if(!receivedValid) {
@@ -82,32 +82,46 @@ public class Network {
                 return;
             }
 
-            switch(decoded.get("request").toString()) {
-                case "subscribe": task = () -> {
-                    String role = decoded.get("role").toString();
-                    Subscription subscription = null;
+            var request = decoded.get("request").toString();
+            System.out.println("Received: |" + request + "|");
+            switch (request) {
+                case "subscribe":
+                    task = () -> {
+                        String role = decoded.get("role").toString();
+                        Subscription subscription = null;
 
-                    if( role.equals("secretary") )
-                        subscription = Subscription.SECRETARY;
-                    else if( role.equals("manager") )
-                        subscription = Subscription.MANAGER;
-                    else if( role.equals("public-monitor") )
-                        subscription = Subscription.PUBLIC_MONITOR;
+                        if (role.equals("secretary"))
+                            subscription = Subscription.SECRETARY;
+                        else if (role.equals("manager"))
+                            subscription = Subscription.MANAGER;
+                        else if (role.equals("public-monitor"))
+                            subscription = Subscription.PUBLIC_MONITOR;
 
-                    if( subscription == null )
-                        System.out.println("Invalid subscription attempt (" + role + ").");
+                        if (subscription == null)
+                            System.out.println("Invalid subscription attempt (" + role + ").");
 
-                    subscribers.add(subscription, this);
-                    this.send(model.toJSON(subscription).toJSONString());
-                }; break;
+                        subscribers.add(subscription, this);
 
-                // case "": task = () -> {
-                    // after model changes because of current task, call updateSubscribers(relevant subscriptions)
-                // }; break;
-    
-                default: task = () -> {
-                    System.out.println("Received: " + message);
-                };
+                        var info = model.infoJSON();
+                        info.put("serverSaid", "initialization");
+                        this.send(info.toJSONString());
+
+                        var data = model.toJSONforSubscribersOf(subscription);
+                        data.put("serverSaid", "update");
+                        this.send(data.toJSONString());
+                    };
+                    break;
+
+                // case "":
+                //     task = () -> {
+                //         // after model changes because of current task, call updateSubscribers(relevant subscriptions)
+                //     };
+                //     break;
+
+                default:
+                    task = () -> {
+                        System.out.println("Unknown request (" + request + ").");
+                    };
             }
 
             taskProcessor.process(task);
@@ -115,7 +129,7 @@ public class Network {
 
         private void updateSubscribers(Subscription... ofSubscription) {
             for (Subscription subscription : ofSubscription) {
-                var update = model.toJSON(subscription).toJSONString();
+                var update = model.toJSONforSubscribersOf(subscription).toJSONString();
                 subscribers.getAll(subscription).forEach(subscriber -> {
                     subscriber.send(update);
                 });

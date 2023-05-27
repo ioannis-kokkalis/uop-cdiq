@@ -25,7 +25,7 @@ public class App {
         } catch (NumberFormatException e) {
             System.err.println("Invlaid port input. Given \"" + args[0] + ". Check pom.xml");
         } catch (NetworkException | ModelException e) {
-            System.err.println(e.getMessage());
+            System.err.println(e);
         } finally {
             if (network != null)
                 network.shutdown();
