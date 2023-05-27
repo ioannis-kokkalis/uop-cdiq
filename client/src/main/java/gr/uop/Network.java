@@ -64,8 +64,31 @@ public class Network {
             return;
         }
 
-        System.out.println("Proccessing: |" + message + "|");
-        // TODO process message
+        var decoded = Packet.decode(message);
+        boolean receivedValid = decoded != null && decoded.get("serverSaid") != null;
+
+        if(!receivedValid) {
+            System.err.println("Received invlalid server message.");
+            return;
+        }
+
+        System.out.println("===");
+        var serverSaid = decoded.get("serverSaid").toString();
+        System.out.println("Server Said: |" + serverSaid + "|");
+        switch (serverSaid) {
+            case "initialization":
+                // TODO
+                break;
+            case "update":
+                // TODO
+                // different message contents depending on the subscription (secretary, manager, public-monitor)
+                break;
+            default:
+                System.out.println("Server said: " + serverSaid);
+        }
+        System.out.println("--- (Decoded) ---");
+        System.out.println(decoded);
+        System.out.println("===");
     }
 
     /**

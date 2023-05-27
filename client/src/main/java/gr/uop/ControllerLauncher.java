@@ -54,7 +54,7 @@ public class ControllerLauncher implements Initializable {
             clientOptionButtons.forEach(b -> b.setDisable(!HOSTPORTPATTERN.matcher(n).find()));
         });
 
-        inputIP.setText(App.lastIPPortGiven);
+        inputIP.setText("localhost:23566");
     }
     
     public void openSecretary() {
