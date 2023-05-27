@@ -12,11 +12,8 @@ import org.json.simple.JSONObject;
 import gr.uop.Network.Packet;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
-import javafx.stage.Modality;
 
 public class ControllerLauncher implements Initializable {
     
@@ -111,10 +108,7 @@ public class ControllerLauncher implements Initializable {
             onSuccessRun.run();
         }
         else {
-            var alert = new Alert(AlertType.INFORMATION);
-            alert.initModality(Modality.APPLICATION_MODAL);
-            alert.setHeaderText("Failed to connect!");
-            alert.show();
+            App.Alerts.serverConnectionFailed();
 
             inputIP.setText(App.lastIPPortGiven);
             inputIP.setDisable(false);

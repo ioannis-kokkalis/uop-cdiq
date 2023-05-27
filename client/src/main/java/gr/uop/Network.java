@@ -59,6 +59,11 @@ public class Network {
      * @param message that arrived from the server
      */
     private void received(String message) {
+        if( message == null ) {
+            App.Alerts.serverConnectionTerminated();
+            return;
+        }
+
         System.out.println("Proccessing: |" + message + "|");
         // TODO process message
     }
@@ -71,8 +76,7 @@ public class Network {
 
             while (this.fromServer.hasNext())
                 this.received(fromServer.nextLine());
-            // socket closed, either by client or server, should be client side 99% of the times
-            // TODO notify the app that this client has been disconnected | maybe? call received("disconnected") and handle it there?
+            this.received(null); // indicate connection termination
 
         }).start();
     }
