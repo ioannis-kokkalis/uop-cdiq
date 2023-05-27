@@ -6,17 +6,17 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.LinkedList;
 
+import gr.uop.network.Network.Client;
+
 public class Accepter {
     
     private final TaskProcessor taskProcessor;
-    private final Subscribers subscribers;
 
     private final ServerSocket listener;
     private final LinkedList<Client> clients;
 
-    public Accepter(Network network, int portToListen, TaskProcessor taskProcessor, Subscribers subscribers) throws IOException {
+    public Accepter(Network network, int portToListen, TaskProcessor taskProcessor) throws IOException {
         this.taskProcessor = taskProcessor;
-        this.subscribers = subscribers;
         this.listener = new ServerSocket(portToListen);
         this.clients = new LinkedList<>();
 
@@ -30,7 +30,7 @@ public class Accepter {
                     Task establishAcceptedConnection = () -> {
                         Client client;
                         try {
-                            client = new Client(accepted, this.taskProcessor, this.subscribers);
+                            client = network.new Client(accepted, clients);
                         } catch (IOException e) {
                             System.out.println("Failed to establish client communication.");
                             return;

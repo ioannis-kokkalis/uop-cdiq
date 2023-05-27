@@ -5,6 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import gr.uop.network.Network.Client;
+
 public class Subscribers {
 
     public enum Subscription {
