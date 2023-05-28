@@ -1,5 +1,9 @@
 package gr.uop.model;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+
 public class User {
 
     public enum Status {
@@ -25,6 +29,7 @@ public class User {
     private final String secret;
 
     private Status status;
+    private List<Company> companiesRegisteredAt;
 
     public User(String name, String secret) {
         this.ID = generateID();
@@ -32,7 +37,10 @@ public class User {
         this.secret = secret;
 
         this.status = Status.WAITING;
+        this.companiesRegisteredAt = new LinkedList<>();
     }
+
+    // ---
 
     private int generateID() {
         return NEXT_ID++;
@@ -54,6 +62,10 @@ public class User {
 
     public Status getStatus() {
         return status;
+    }
+
+    public Collection<Company> getCompaniesRegisteredAt() {
+        return this.companiesRegisteredAt;
     }
 
     public void setStatus(Status status) {

@@ -83,8 +83,53 @@ public class Network {
                 // TODO
                 // different message contents depending on the subscription (secretary, manager, public-monitor)
                 break;
+            case "user-info":
+                /* TODO Handle Response: User Found
+                {
+                    "result": "found",
+                    "id": "2", // you sent from ui
+                    "name": "somename",
+                    "secret": "somesecret",
+                    "companies-registered": ["1","14","5"]
+                }
+                 */
+                /* TODO Handle Response: User Not Found
+                {
+                    "result": "not-found",
+                    "id": "2", // you sent from ui
+                    "name": "somename", // you sent from ui
+                    "secret": "somesecret" // you sent from ui
+                }
+                 */
+                break;
+            case "user-register":
+                /* TODO Handle Response: Always
+                {
+                    "result": "ok",
+                    "id": "5", // generated from the system
+                    "name": "somename", // you sent from ui
+                    "secret": "somesecret" // you sent from ui
+                }
+                 */
+                break;
+            case "user-insert":
+                /* TODO Handle Response: ID -did- match User
+                {
+                    "result": "ok",
+                    "id": "5", // you sent from ui
+                    "name": "somename",
+                    "secret": "somename"
+                }
+                */
+                /* TODO Handle Response: ID -did not- match User
+                {
+                    "result": "not-ok",
+                    "id": "5" // you sent from ui
+                }
+                 */
+                break;
             default:
-                System.out.println("Server said: " + serverSaid);
+                System.out.println("Server said unkown: " + serverSaid);
         }
         System.out.println("--- (Decoded) ---");
         System.out.println(decoded);
