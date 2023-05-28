@@ -104,11 +104,11 @@ public class Network {
 
                         var info = model.infoJSON();
                         info.put("serverSaid", "initialization");
-                        this.send(info.toJSONString());
+                        this.send(Packet.encode(info));
 
                         var data = model.toJSONforSubscribersOf(subscription);
                         data.put("serverSaid", "update");
-                        this.send(data.toJSONString());
+                        this.send(Packet.encode(data));
                     };
                     break;
 
@@ -129,9 +129,13 @@ public class Network {
 
         private void updateSubscribers(Subscription... ofSubscription) {
             for (Subscription subscription : ofSubscription) {
-                var update = model.toJSONforSubscribersOf(subscription).toJSONString();
+
+                var update = model.toJSONforSubscribersOf(subscription);
+                update.put("serverSaid", "update");
+                var updatePacket = Packet.encode(update);
+
                 subscribers.getAll(subscription).forEach(subscriber -> {
-                    subscriber.send(update);
+                    subscriber.send(updatePacket);
                 });
             }
         }
