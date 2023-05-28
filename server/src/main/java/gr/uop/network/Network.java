@@ -106,7 +106,7 @@ public class Network {
                         info.put("serverSaid", "initialization");
                         this.send(Packet.encode(info));
 
-                        var data = model.toJSONforSubscribersOf(subscription);
+                        var data = model.toJSONforSubscribersOf(subscription, false);
                         data.put("serverSaid", "update");
                         this.send(Packet.encode(data));
                     };
@@ -130,7 +130,7 @@ public class Network {
         private void updateSubscribers(Subscription... ofSubscription) {
             for (Subscription subscription : ofSubscription) {
 
-                var update = model.toJSONforSubscribersOf(subscription);
+                var update = model.toJSONforSubscribersOf(subscription, true);
                 update.put("serverSaid", "update");
                 var updatePacket = Packet.encode(update);
 
