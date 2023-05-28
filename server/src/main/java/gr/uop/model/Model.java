@@ -30,6 +30,25 @@ public class Model {
             this.users = new LinkedHashMap<>();
         }
 
+        public User attemptGetUser(int id, String name, String secret) {
+            User user = users.get(id);
+
+            if( user != null )
+                return user;
+            
+            // TODO needs improvement
+            // BUG relative weak searching, may cause issues on details
+            for (User useri : this.users.values()) {
+                if( name.toLowerCase().equals(useri.getName().toLowerCase()) ||
+                        secret.equals(useri.getSecret()) ) {
+                    user = useri;
+                    break;
+                }
+            }
+
+            return user;
+        }
+
         public void add(User user) {
             this.users.put(user.getID(), user);
         }
@@ -133,6 +152,13 @@ public class Model {
     }
 
     // ===
+
+    /**
+     * @return {@code null} when unable to find user, user does not exist (or failed to find)
+     */
+    public User getUser(int id, String name, String secret) {
+        return usersManager.attemptGetUser(id, name, secret);
+    }
 
     /**
      * 
