@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.TilePane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" styleClass="color-background-idle" stylesheets="@../style/style.css" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gr.uop.ControllerPublicMonitor">
+   <children>
+      <VBox alignment="CENTER" fillWidth="false" StackPane.alignment="CENTER">
+         <children>
+            <TilePane fx:id="companiesContainer" alignment="CENTER_LEFT" prefColumns="4">
+               <styleClass>
+                  <String fx:value="gaping-h-less" />
+                  <String fx:value="gaping-v-less" />
+               </styleClass>
+            </TilePane>
+         </children>
+      </VBox>
+   </children>
+</StackPane>

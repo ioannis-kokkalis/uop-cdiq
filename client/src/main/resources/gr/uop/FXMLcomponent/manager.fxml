@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.TilePane?>
+<?import javafx.scene.layout.VBox?>
+
+
+<StackPane stylesheets="@../style/style.css" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gr.uop.ControllerManager">
+   <children>
+      <VBox alignment="CENTER" fillWidth="false" StackPane.alignment="CENTER">
+         <children>
+            <TilePane fx:id="companiesContainer" alignment="CENTER_LEFT" orientation="VERTICAL" prefColumns="2" prefRows="9" />
+         </children>
+      </VBox>
+   </children>
+</StackPane>

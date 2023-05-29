@@ -15,7 +15,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 
-public class ControllerLauncher implements Initializable {
+public class ControllerLauncher extends BaseController implements Initializable{
     
     private enum Role {
         SECRETARY("secretary"),
@@ -45,6 +45,7 @@ public class ControllerLauncher implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        App.CONTROLLER = this;
         clientOptionButtons.add(buttonS);
         clientOptionButtons.add(buttonM);
         clientOptionButtons.add(buttonPM);

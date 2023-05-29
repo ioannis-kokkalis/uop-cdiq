@@ -4,8 +4,8 @@
 	vcolor-primary: #ab7b0d;
     vcolor-accent: #ddc07e;
 	vcolor-text: #1c1502;
-    vcolor-background: #fbeed0; 
-    
+    vcolor-background: #fbeed0;
+   
     /* ||| Color Constants */
 
     color-state-calling: #00962b;
@@ -76,3 +76,21 @@
     -fx-color: color-background-busy;
     -fx-text-fill: color-text;
 }
+
+.border {
+    -fx-border-color: black;
+    -fx-border-insets: 3;
+    -fx-border-width: 3;
+    -fx-border-style: dashed;
+ }
+
+.color-background-notselected {-fx-background-color: #FF0000;}
+.color-background-selected {-fx-background-color: #00cc00;}
+
+.color-background-available {-fx-background-color: #0082b1;}
+.color-background-calling {-fx-background-color: #00962b;}
+.color-background-paused-frozen {-fx-background-color:#c35100;}
+.color-background-occupied {-fx-background-color:#a30000;}
+
+.l-color{-fx-text-fill: white;}/*change name*/
+ 

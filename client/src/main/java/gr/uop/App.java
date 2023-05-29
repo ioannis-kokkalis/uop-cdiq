@@ -4,25 +4,43 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.TilePane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.Optional;
+import java.util.concurrent.Semaphore;
+
+import org.json.simple.JSONArray;
 
 public class App extends Application {
 
     public static Network NETWORK;
-    
+
+    public static BaseController CONTROLLER;
+      
     public static String lastIPPortGiven = "";
 
-    private static Scene scene;
+    public static Semaphore smp = new Semaphore(0);
+
+    public static Scene scene;
     private static Stage stage;
 
     @Override
@@ -51,6 +69,7 @@ public class App extends Application {
         try {
             root = new FXMLLoader(App.class.getResource("FXMLcomponent/" + component + ".fxml")).load();
         } catch (Exception e) {
+            e.printStackTrace();
             Label oops = new Label("FXML component \"" + component + ".fxml\" could not load.");
             oops.setPadding(new Insets(64, 128, 64, 128));
             root = oops;
@@ -85,7 +104,83 @@ public class App extends Application {
         App.stage.setFullScreenExitHint("");
     }
 
-    public class Alerts {
+    public static class Alerts {
+
+        public static void managerViewQueue(String comapnyName,JSONArray waitingList,JSONArray unavailiableList){
+            Dialog<Integer> dialog = new Dialog<>();
+            dialog.initOwner(stage);
+            dialog.setTitle(comapnyName);
+
+            HBox mainContainer = new HBox();
+            VBox waitingContainer = new VBox();
+            VBox unavailiableContainer = new VBox();
+
+            Label waitingLabel = new Label("Waiting");
+            VBox waitingInterviwers = new VBox();
+            for (int i=0;i<waitingList.size();i++) {
+                waitingInterviwers.getChildren().add(new Label(waitingList.get(i)+""));
+            }
+            waitingInterviwers.setAlignment(Pos.CENTER);
+            waitingContainer.getChildren().addAll(waitingLabel,waitingInterviwers);
+
+            Label unavailiableLabel = new Label("Unavailiable");
+            VBox unavailiableInterviwers = new VBox();
+            for (int i=0;i<unavailiableList.size();i++) {
+                unavailiableInterviwers.getChildren().add(new Label(unavailiableList.get(i)+""));
+            }
+            unavailiableInterviwers.setAlignment(Pos.CENTER);
+            unavailiableContainer.getChildren().addAll(unavailiableLabel,unavailiableInterviwers);
+
+            mainContainer.getChildren().addAll(waitingContainer,unavailiableContainer);
+            mainContainer.setSpacing(10);
+
+            dialog.getDialogPane().setContent(mainContainer);
+
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK);
+
+            dialog.show();
+            
+        }
+
+        public static void secretaryInformUser(String mainText, String headerText){
+            var alert = new Alert(AlertType.INFORMATION);
+            alert.initModality(Modality.APPLICATION_MODAL);
+            alert.initOwner(stage);
+            alert.setTitle("");
+            alert.setHeaderText(headerText);
+            alert.setContentText(mainText);
+            alert.show();
+        }
+
+        public static String secretaryConfirmInsert(){
+            Alert alert = new Alert(AlertType.CONFIRMATION);
+            alert.setTitle("Confirmation");
+            alert.setContentText("Do you want to proceed");
+            alert.setHeaderText(null);
+            alert.initModality(Modality.WINDOW_MODAL);
+            alert.initOwner(stage);
+
+            alert.getButtonTypes().add(ButtonType.CLOSE);
+          
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.get() == ButtonType.OK) {
+                return "OK";
+            }
+            else if (result.get() == ButtonType.CANCEL) {
+                return "Cancel";
+            }
+            return "Cancel";
+        }
+
+        public static void secretaryIllegalSearch(String msg){
+            var alert = new Alert(AlertType.ERROR);
+            alert.initModality(Modality.APPLICATION_MODAL);
+            alert.initOwner(stage);
+            alert.setTitle("");
+            alert.setHeaderText("Field Empty");
+            alert.setContentText(msg);
+            alert.show(); 
+        }
 
         public static void serverConnectionTerminated() {
             Platform.runLater(() -> {
