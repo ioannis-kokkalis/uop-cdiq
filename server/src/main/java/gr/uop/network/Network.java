@@ -15,7 +15,9 @@ import org.json.simple.JSONObject;
 import gr.uop.App;
 import gr.uop.Task;
 import gr.uop.model.Model;
+import gr.uop.model.Company.State;
 import gr.uop.model.Model.Action;
+import gr.uop.model.Model.ManagerAction;
 import gr.uop.network.Subscribers.Subscription;
 
 public class Network {
@@ -237,11 +239,98 @@ public class Network {
                     };
                     break;
 
+                case "manager":
+                    task = () -> {
+                        // [
+                        //     {
+                        //         "request": "manager",
+                        //         "action": "arrived | discard | completed | completed-pause | pause | resume",
+                        //         "company-id": "2",
+                        //         "company-state": "available | calling | calling-timeout | occupied | paused"
+                        //     },
+                        //     {
+                        //         "serverSaid": "manager",
+                        //         "result": "ok | not-ok"
+                        //     }
+                        // ]
+
+                        var strManagerAction = decoded.get("action").toString();
+                        var strCompanyID = decoded.get("company-id").toString();
+                        var strCompanyState = decoded.get("company-state").toString();
+
+                        ManagerAction managerAction = null;
+                        int companyID = -1;
+                        State companyState = null;
+                        try {
+                            managerAction = ManagerAction.valueOf(strManagerAction);
+                            companyID = Integer.valueOf(strCompanyID);
+                            companyState = State.valueOf(strCompanyState);
+                        } catch(Exception e) { }
+                        
+                        Action action = null;
+                        boolean canDoAction = false;
+
+                        if (managerAction != null && companyID != -1 && companyState != null
+                                && !companyState.equals(model.getCompany(companyID).getState())) {
+
+                            if (companyState.equals(State.AVAILABLE)
+                                    && managerAction.equals(ManagerAction.PAUSE)) {
+                                action = Action.MANAGER_AVAILABLE_PAUSE;
+
+                            } else if (companyState.equals(State.PAUSED)
+                                    && managerAction.equals(ManagerAction.RESUME)) {
+                                action = Action.MANAGER_PAUSED_RESUME;
+
+                            } else if (companyState.equals(State.CALLING)
+                                    && managerAction.equals(ManagerAction.ARRIVED)) {
+                                action = Action.MANAGER_CALLING_ARRIVED;
+
+                            } else if (companyState.equals(State.CALLING)
+                                    && managerAction.equals(ManagerAction.PAUSE)) {
+                                action = Action.MANAGER_CALLING_PAUSE;
+
+                            } else if (companyState.equals(State.CALLING)
+                                    && managerAction.equals(ManagerAction.DISCARD)) {
+                                action = Action.MANAGER_CALLING_DISCARD;
+
+                            } else if (companyState.equals(State.CALLING_TIMEOUT)
+                                    && managerAction.equals(ManagerAction.ARRIVED)) {
+                                action = Action.MANAGER_CALLINGTIMEOUT_ARRIVED;
+
+                            } else if (companyState.equals(State.CALLING_TIMEOUT)
+                                    && managerAction.equals(ManagerAction.DISCARD)) {
+                                action = Action.MANAGER_CALLINGTIMEOUT_DISCARD;
+
+                            } else if (companyState.equals(State.OCCUPIED)
+                                    && managerAction.equals(ManagerAction.COMPLETED)) {
+                                action = Action.MANAGER_OCCUPIED_COMPLETED;
+
+                            } else if (companyState.equals(State.OCCUPIED)
+                                    && managerAction.equals(ManagerAction.COMPLETED_PAUSE)) {
+                                action = Action.MANAGER_OCCUPIED_COMPLETEDPAUSE;
+                            }
+
+                            canDoAction = action != null;
+                        }
+
+                        if (canDoAction) {
+                            model.handleAction(action, null, companyID);
+                        }
+
+                        var responseMap = new HashMap<String, String>();
+                        responseMap.put("serverSaid", "manager");
+                        responseMap.put("result", (canDoAction ? "ok" : "not-ok"));
+
+                        var response = new JSONObject(responseMap);
+                        this.send(Packet.encode(response));
+                    };
+                    break;
+
                 // case "":
-                //     task = () -> {
+                // task = () -> {
                 //
-                //     };
-                //     break;
+                // };
+                // break;
 
                 default:
                     task = () -> {

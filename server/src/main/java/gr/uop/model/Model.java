@@ -20,8 +20,6 @@ public class Model {
     // TODO Consider instance backup.
     // Attempt to load from backup, then change initiate() to prefer backup if there is one than creating from scratch, also on shutdown create a backup of the current model.
 
-    // DOING companies and users classes / logic
-
     private class UsersManager {
 
         private final Map<Integer, User> users;
@@ -134,9 +132,39 @@ public class Model {
 
     // ===
 
+    public enum ManagerAction {
+        ARRIVED("arrived"),
+        DISCARD("discard"),
+        COMPLETED("completed"),
+        COMPLETED_PAUSE("completed-pause"),
+        PAUSE("pause"),
+        RESUME("resume");
+
+        private final String value;
+
+        private ManagerAction(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return value;
+        }
+    }
+
     public enum Action {
         USER_REGISTER_IN_COMPANIES,
-        CALLING_TIMEDOUT
+        CALLING_TIMEDOUT,
+
+        MANAGER_AVAILABLE_PAUSE,
+        MANAGER_PAUSED_RESUME,
+        MANAGER_CALLING_ARRIVED,
+        MANAGER_CALLING_PAUSE,
+        MANAGER_CALLING_DISCARD,
+        MANAGER_CALLINGTIMEOUT_ARRIVED,
+        MANAGER_CALLINGTIMEOUT_DISCARD,
+        MANAGER_OCCUPIED_COMPLETED,
+        MANAGER_OCCUPIED_COMPLETEDPAUSE
     }
 
     /**
@@ -160,7 +188,7 @@ public class Model {
                 // ===
 
                 for (int companyID : companyIDs)
-                    companiesManager.get(companyID).add(user);
+                    getCompany(companyID).add(user);
 
                 // ===
 
@@ -176,10 +204,112 @@ public class Model {
 
                 // ===
 
-                var company = companiesManager.get(companyIDs[0]);
+                var company = getCompany(companyIDs[0]);
                 user = company.getStateUser();
                 company.setState(State.CALLING_TIMEOUT);
                 company.setStateUser(user);
+
+                // ===
+
+                break;
+                
+            case MANAGER_AVAILABLE_PAUSE:
+                if (validArgumentsForActionsThatManagerTriggers(action, user, companyIDs))
+                    break;
+                
+                // ===
+                
+                // DOING
+
+                // ===
+
+                break;
+            case MANAGER_CALLING_ARRIVED:
+            case MANAGER_CALLINGTIMEOUT_ARRIVED:
+                if (validArgumentsForActionsThatManagerTriggers(action, user, companyIDs))
+                    break;
+
+                // ===
+                
+                // DOING
+
+                // ===
+
+                break;
+            case MANAGER_CALLING_DISCARD:
+                if (validArgumentsForActionsThatManagerTriggers(action, user, companyIDs))
+                    break;
+
+                // ===
+                
+                // DOING
+                
+                changeStateToCallingOrAvailable(companyIDs[0]);
+                didAction = true;
+                
+                // ===
+
+                break;
+            case MANAGER_CALLING_PAUSE:
+                if (validArgumentsForActionsThatManagerTriggers(action, user, companyIDs))
+                    break;
+
+                // ===
+                
+                // DOING
+
+                // ===
+
+                break;
+            case MANAGER_CALLINGTIMEOUT_DISCARD:
+                if (validArgumentsForActionsThatManagerTriggers(action, user, companyIDs))
+                    break;
+
+                // ===
+                
+                // DOING
+                
+                changeStateToCallingOrAvailable(companyIDs[0]);
+                didAction = true;
+                
+                // ===
+
+                break;
+            case MANAGER_OCCUPIED_COMPLETED:
+                if (validArgumentsForActionsThatManagerTriggers(action, user, companyIDs))
+                    break;
+
+                // ===
+                
+                // DOING
+                
+                changeStateToCallingOrAvailable(companyIDs[0]);
+                didAction = true;
+                
+                // ===
+
+                break;
+            case MANAGER_OCCUPIED_COMPLETEDPAUSE:
+                if (validArgumentsForActionsThatManagerTriggers(action, user, companyIDs))
+                    break;
+
+                // ===
+                
+                // DOING
+
+                // ===
+
+                break;
+            case MANAGER_PAUSED_RESUME:
+                if (validArgumentsForActionsThatManagerTriggers(action, user, companyIDs))
+                    break;
+
+                // ===
+                
+                // DOING
+                
+                changeStateToCallingOrAvailable(companyIDs[0]);
+                didAction = true;
 
                 // ===
 
@@ -192,6 +322,19 @@ public class Model {
             });
             App.network.updateSubscribers(Subscription.PUBLIC_MONITOR, Subscription.MANAGER);
         }
+    }
+
+    private void changeStateToCallingOrAvailable(int companyID) {
+        getCompany(companyID).setState(State.AVAILABLE);
+    }
+
+    private boolean validArgumentsForActionsThatManagerTriggers(Action action, User user, int[] companyIDs) {
+        boolean result = companyIDs.length != 1 || user != null;
+        if(result) {
+            App.consoleLogError("Can't handle \"" + action + "\".",
+                "Requires exactly 1 company and null user.");
+        }
+        return result;
     }
 
     public User createUser(String name, String secret) {
@@ -207,6 +350,13 @@ public class Model {
      */
     public User getUser(int id, String name, String secret) {
         return usersManager.attemptGetUser(id, name, secret);
+    }
+
+    /**
+     * @return {@code null} when unable to find company
+     */
+    public Company getCompany(int id) {
+        return companiesManager.get(id);
     }
 
     /**
@@ -308,7 +458,7 @@ public class Model {
     }
 
     private void backupJSON() {
-        // TODO save a JSON human readable backup file
+        // DOING save a JSON human readable backup file
     }
 
 }
