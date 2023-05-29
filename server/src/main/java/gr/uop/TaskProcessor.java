@@ -1,4 +1,4 @@
-package gr.uop.network;
+package gr.uop;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -28,11 +28,11 @@ public class TaskProcessor {
             if (!tpe.awaitTermination(5, TimeUnit.SECONDS)) {
                 tpe.shutdownNow();
                 if (!tpe.awaitTermination(5, TimeUnit.SECONDS)) {
-                    System.err.println("Task processor unable to shutdown!");
+                    App.consoleLogError("Task processor unable to shutdown!");
                 }
             }
         } catch (InterruptedException e) {
-            System.err.println("Task processor got interrupted! (should not happen)");
+            App.consoleLogError("Task processor got interrupted! (should not happen)");
         }
     }
 

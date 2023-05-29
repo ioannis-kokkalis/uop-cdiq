@@ -1,4 +1,4 @@
-package gr.uop.network;
+package gr.uop;
 
 public interface Task extends Runnable {
     

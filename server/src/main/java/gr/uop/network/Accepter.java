@@ -6,17 +6,16 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.LinkedList;
 
+import gr.uop.App;
+import gr.uop.Task;
 import gr.uop.network.Network.Client;
 
 public class Accepter {
     
-    private final TaskProcessor taskProcessor;
-
     private final ServerSocket listener;
     private final LinkedList<Client> clients;
 
-    public Accepter(Network network, int portToListen, TaskProcessor taskProcessor) throws IOException {
-        this.taskProcessor = taskProcessor;
+    public Accepter(Network network, int portToListen) throws IOException {
         this.listener = new ServerSocket(portToListen);
         this.clients = new LinkedList<>();
 
@@ -25,27 +24,27 @@ public class Accepter {
                 while (true) {
                     Socket accepted = this.listener.accept();
 
-                    System.out.println("Connection accepted.");
+                    App.consoleLog("Connection accepted.");
 
                     Task establishAcceptedConnection = () -> {
                         Client client;
                         try {
                             client = network.new Client(accepted, clients);
                         } catch (IOException e) {
-                            System.out.println("Failed to establish client communication.");
+                            App.consoleLogError("Failed to establish client communication.");
                             return;
                         }
-                        System.out.println("Client communication established.");
+                        App.consoleLog("Client communication established.");
                         clients.add(client);
                     };
 
-                    this.taskProcessor.process(establishAcceptedConnection);
+                    App.TASK_PROCESSOR.process(establishAcceptedConnection);
                 }
 
             } catch (SocketException e) {
-                System.out.println("Network accepter shutdown.");
+                App.consoleLog("Network accepter shutdown.");
             } catch (IOException e) {
-                System.out.println("Exception while listening to accept connections.");
+                App.consoleLogError("Exception while listening to accept connections.");
             }
         }).start();
     }
@@ -55,7 +54,7 @@ public class Accepter {
             listener.close();
             clients.forEach(c -> c.disconnect());
         } catch (IOException e) {
-            System.out.println("Exception while shuting down accepters listener.");
+            App.consoleLogError("Exception while shuting down accepters listener.");
         }
     }
 

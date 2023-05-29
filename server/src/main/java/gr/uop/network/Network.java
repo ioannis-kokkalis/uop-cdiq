@@ -12,12 +12,14 @@ import java.util.Scanner;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import gr.uop.App;
+import gr.uop.Task;
 import gr.uop.model.Model;
+import gr.uop.model.Model.Action;
 import gr.uop.network.Subscribers.Subscription;
 
 public class Network {
 
-    private final TaskProcessor taskProcessor;
     private final Subscribers subscribers;
     private final Accepter accepter;
 
@@ -26,9 +28,8 @@ public class Network {
     public Network(int port, Model model) throws NetworkException {
         try {
             this.model = model;
-            this.taskProcessor = new TaskProcessor();
             this.subscribers = new Subscribers();
-            this.accepter = new Accepter(this, port, taskProcessor);
+            this.accepter = new Accepter(this, port);
         } catch (IOException e) {
             shutdown();
             throw new NetworkException(e.getMessage());
@@ -37,7 +38,6 @@ public class Network {
 
     public void shutdown() {
         accepter.shutdown();
-        taskProcessor.shutdown();
     }
 
     public class Client {
@@ -59,7 +59,7 @@ public class Network {
                 }
                 subscribers.remove(this);
                 clients.remove(this);
-                System.out.println("Client disconnected.");
+                App.consoleLog("Client disconnected.");
             }).start();
         }
     
@@ -67,7 +67,7 @@ public class Network {
             try {
                 this.socket.close();
             } catch (IOException e) {
-                System.err.println("Unable to disconnect client.");
+                App.consoleLogError("Unable to disconnect client.");
             }
         }
     
@@ -82,12 +82,12 @@ public class Network {
             boolean receivedValid = decoded != null && decoded.get("request") != null;
     
             if(!receivedValid) {
-                System.err.println("Received invlalid client message.");
+                App.consoleLogError("Received invlalid client message.");
                 return;
             }
 
             var request = decoded.get("request").toString();
-            System.out.println("Received: |" + request + "|");
+            App.consoleLog("Received Packet", decoded.toString());
             switch (request) {
                 case "subscribe":
                     task = () -> {
@@ -102,7 +102,7 @@ public class Network {
                             subscription = Subscription.PUBLIC_MONITOR;
 
                         if (subscription == null)
-                            System.out.println("Invalid subscription attempt (" + role + ").");
+                            App.consoleLogError("Invalid subscription attempt (" + role + ").");
 
                         subscribers.add(subscription, this);
 
@@ -172,8 +172,27 @@ public class Network {
                         }
                          */
 
-                        // after model changes because of current task, call updateSubscribers(relevant subscriptions)
-                        // TODO respond (check client side expectations for the request)
+                        var name = decoded.get("name").toString();
+                        var secret = decoded.get("secret").toString();
+                        var companiesToRegisterRaw = (JSONArray) decoded.get("companies-to-register");
+                        var companiesToRegister = companiesToRegisterRaw
+                                .stream()
+                                .mapToInt(value -> Integer.parseInt("" + value))
+                                .toArray();
+
+                        var userCreated = model.createUser(name, secret);
+                        
+                        model.handleAction(Action.USER_REGISTER_IN_COMPANIES, userCreated, companiesToRegister);
+
+                        var map = new HashMap<String, String>();
+                        map.put("serverSaid", "user-register");
+                        map.put("result", "ok");
+                        map.put("id", "" + userCreated.getID());
+                        map.put("name", userCreated.getName());
+                        map.put("secret", userCreated.getSecret());
+
+                        var response = new JSONObject(map);
+                        this.send(Packet.encode(response));
                     };
                     break;
                 case "user-insert":
@@ -184,39 +203,68 @@ public class Network {
                         //     "id": "2",
                         //     "companies-to-register": ["2","7","16"]
                         // }
-                        // after model changes because of current task, call updateSubscribers(relevant subscriptions)
-                        // TODO respond (check client side expectations for the request)
+
+                        int id = -1;
+                        try {
+                            id = Integer.parseInt(decoded.get("id").toString());
+                        } catch (NumberFormatException e) {}
+
+                        var user = model.getUser(id, "", "");
+
+                        var map = new HashMap<String, String>();
+                        map.put("serverSaid", "user-insert");
+                        if( user != null ) {
+                            var companiesToRegisterRaw = (JSONArray) decoded.get("companies-to-register");
+                            var companiesToRegister = companiesToRegisterRaw
+                                    .stream()
+                                    .mapToInt(value -> Integer.parseInt("" + value))
+                                    .toArray();
+
+                            model.handleAction(Action.USER_REGISTER_IN_COMPANIES, user, companiesToRegister);
+
+                            map.put("result", "ok");
+                            map.put("id", "" + user.getID());
+                            map.put("name", user.getName());
+                            map.put("secret", user.getSecret());
+                        }
+                        else {
+                            map.put("result", "not-ok");
+                            map.put("id", decoded.get("id").toString());
+                        }
+
+                        var response = new JSONObject(map);
+                        this.send(Packet.encode(response));
                     };
                     break;
 
                 // case "":
                 //     task = () -> {
-                //         // after model changes because of current task, call updateSubscribers(relevant subscriptions)
+                //
                 //     };
                 //     break;
 
                 default:
                     task = () -> {
-                        System.out.println("Unknown request (" + request + ").");
+                        App.consoleLogError("Unknown Request (" + request + ").");
                     };
             }
 
-            taskProcessor.process(task);
+            App.TASK_PROCESSOR.process(task);
         }
 
-        private void updateSubscribers(Subscription... ofSubscription) {
-            for (Subscription subscription : ofSubscription) {
+    }
 
-                var update = model.toJSONforSubscribersOf(subscription, true);
-                update.put("serverSaid", "update");
-                var updatePacket = Packet.encode(update);
+    public void updateSubscribers(Subscription... ofSubscription) {
+        for (Subscription subscription : ofSubscription) {
 
-                subscribers.getAll(subscription).forEach(subscriber -> {
-                    subscriber.send(updatePacket);
-                });
-            }
+            var update = model.toJSONforSubscribersOf(subscription, false);
+            update.put("serverSaid", "update");
+            var updatePacket = Packet.encode(update);
+
+            subscribers.getAll(subscription).forEach(subscriber -> {
+                subscriber.send(updatePacket);
+            });
         }
-
     }
 
 }

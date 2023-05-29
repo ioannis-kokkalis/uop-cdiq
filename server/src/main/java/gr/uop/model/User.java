@@ -7,19 +7,9 @@ import java.util.List;
 public class User {
 
     public enum Status {
-        WAITING("waiting"),
-        INTERVIEW("interview");
-
-        private final String value;
-
-        private Status(String value) {
-            this.value = value;
-        }
-
-        @Override
-        public String toString() {
-            return value;
-        }
+        WAITING,
+        CALLING,
+        INTERVIEW;
     }
 
     private static int NEXT_ID = 1;
@@ -38,6 +28,14 @@ public class User {
 
         this.status = Status.WAITING;
         this.companiesRegisteredAt = new LinkedList<>();
+    }
+
+    public void isNow(Status status) {
+        this.status = status;
+    }
+
+    public boolean is(Status status) {
+        return this.status.equals(status);
     }
 
     // ---
@@ -60,21 +58,13 @@ public class User {
         return secret;
     }
 
-    public Status getStatus() {
-        return status;
-    }
-
     public Collection<Company> getCompaniesRegisteredAt() {
         return this.companiesRegisteredAt;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-
     @Override
     public String toString() {
-        return this.ID + " \"" + this.name + "\" " + "[" + this.secret + "]";
+        return this.ID + " \"" + this.name + "\" " + "[" + this.secret + "] is " + status;
     }
 
 }
