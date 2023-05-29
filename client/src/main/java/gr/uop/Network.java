@@ -25,7 +25,7 @@ public class Network {
             try {
                 decoded = (JSONObject) new JSONParser().parse(message);
             } catch (ParseException e) {
-                System.err.println("Failed to decode client message: " + message);
+                App.consoleLogError("Failed to decode client message.", message);
             }
 
             return decoded;
@@ -73,13 +73,12 @@ public class Network {
         boolean receivedValid = decoded != null && decoded.get("serverSaid") != null;
 
         if (!receivedValid) {
-            System.err.println("Received invlalid server message.");
+            App.consoleLogError("Received invlalid server message.", message);
             return;
         }
 
-        System.out.println("===");
         var serverSaid = decoded.get("serverSaid").toString();
-        System.out.println("Server Said: |" + serverSaid + "|");
+        App.consoleLog("Received Packet", decoded.toString());
         switch (serverSaid) {
             case "initialization":
                 try {
@@ -251,11 +250,8 @@ public class Network {
                  */
                 break;
             default:
-                System.out.println("Server said unkown: " + serverSaid);
+                App.consoleLogError("Unknown Server Said", serverSaid);
         }
-        System.out.println("--- (Decoded) ---");
-        System.out.println(decoded);
-        System.out.println("===");
     }
 
     /**

@@ -103,6 +103,32 @@ public class App extends Application {
         });
         App.stage.setFullScreenExitHint("");
     }
+    
+    public static void consoleLog(String main, String... extra) {
+        var sb = new StringBuilder();
+
+        sb.append("\n===========\n").append(main);
+
+        for (String e : extra)
+            sb.append("\n-----------\n").append(e);
+
+        sb.append("\n===========\n");
+
+        System.out.println(sb.toString());
+    }
+
+    public static void consoleLogError(String main, String... extra) {
+        var sb = new StringBuilder();
+
+        sb.append("\u001B[31m\n===========\n").append(main);
+
+        for (String e : extra)
+            sb.append("\n-----------\n").append(e);
+
+        sb.append("\n===========\n\u001B[0m");
+
+        System.err.println(sb.toString());
+    }
 
     public static class Alerts {
 

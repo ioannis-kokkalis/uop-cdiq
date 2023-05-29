@@ -9,28 +9,32 @@ import gr.uop.network.NetworkException;
 
 public class App {
 
-    public static void main(String[] args) {
-        Network network = null;
+    public final static TaskProcessor TASK_PROCESSOR = new TaskProcessor();
+
+    public static Network network;
+
+    public static void main(String[] args) {        
         Model model = null;
         try {
             int port = Integer.parseInt(args[0]);
 
             model = Model.initiate();
-            System.out.println("Model started.");
+            App.consoleLog("Model started.");
 
             network = new Network(port, model);
-            System.out.println("Network started on port \"" + port + "\".");
+            App.consoleLog("Network started on port \"" + port + "\".");
 
             CLI();
         } catch (NumberFormatException e) {
-            System.err.println("Invlaid port input. Given \"" + args[0] + ". Check pom.xml");
+            App.consoleLogError("Invlaid server listening port.", "Given \"" + args[0] + ", check pom.xml.");
         } catch (NetworkException | ModelException e) {
-            System.err.println(e);
+            App.consoleLogError(e.toString());
         } finally {
             if (network != null)
                 network.shutdown();
             if (model != null)
                 model.shutdown();
+            App.TASK_PROCESSOR.shutdown();
         }
     }
 
@@ -38,15 +42,40 @@ public class App {
         var scanner = new Scanner(System.in);
 
         while (scanner.hasNext()) {
-            System.out.println("---");
             if (scanner.nextLine().equals("exit")) {
-                System.out.println("Exiting...");
+                App.consoleLog("Exiting...");
                 break;
             } else
-                System.out.println("Enter 'exit' to close the server properly.");
+                App.consoleLog("Enter 'exit' to close the server properly.");
         }
 
         scanner.close();
+    }
+
+    public static void consoleLog(String main, String... extra) {
+        var sb = new StringBuilder();
+
+        sb.append("\n===========\n").append(main);
+
+        for (String e : extra)
+            sb.append("\n-----------\n").append(e);
+
+        sb.append("\n===========\n");
+
+        System.out.println(sb.toString());
+    }
+
+    public static void consoleLogError(String main, String... extra) {
+        var sb = new StringBuilder();
+
+        sb.append("\u001B[31m\n===========\n").append(main);
+
+        for (String e : extra)
+            sb.append("\n-----------\n").append(e);
+
+        sb.append("\n===========\n\u001B[0m");
+
+        System.err.println(sb.toString());
     }
 
 }

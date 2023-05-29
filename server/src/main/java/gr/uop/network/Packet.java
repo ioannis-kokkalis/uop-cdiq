@@ -4,6 +4,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import gr.uop.App;
+
 public class Packet {
     
     public static String encode(JSONObject message) {
@@ -16,7 +18,7 @@ public class Packet {
         try {
             decoded = (JSONObject) new JSONParser().parse(message);
         } catch (ParseException e) {
-            System.err.println("Failed to decode client message: " + message);
+            App.consoleLogError("Failed to decode client message.", message);
         }
 
         return decoded;

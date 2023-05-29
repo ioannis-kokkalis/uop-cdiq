@@ -9,10 +9,10 @@ import java.util.Scanner;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
+import gr.uop.App;
 import gr.uop.model.Company.State;
+import gr.uop.model.User.Status;
 import gr.uop.network.Subscribers.Subscription;
 
 public class Model {
@@ -69,10 +69,14 @@ public class Model {
 
         private final Map<Integer, Company> companies;
 
-        // TODO keep affected companies from last change, network will send those if needed not all each time
+        // TODO (late game) keep affected companies from last change, network will send those if needed not all each time
 
         public CompaniesManager() {
             this.companies = new LinkedHashMap<>();
+        }
+
+        public Company get(int companyID) {
+            return companies.get(companyID);
         }
 
         public Collection<Company> getAll() {
@@ -115,36 +119,13 @@ public class Model {
                 int tableNumber = Integer.parseInt(entry[1]);
                 
                 var company = new Company(companyID, companyName, tableNumber);
-                fakeDifferentStates(company);
                 companiesManager.add(company);
             }
         } catch (Exception e) {
             throw new ModelException(e.getMessage());
         }
 
-        System.out.println();
-        System.out.println("=== (Companies) ===");
-        System.out.println(companiesManager);
-        System.out.println("===");
-        System.out.println();
-    }
-
-    private void fakeDifferentStates(Company company) {
-        // TODO delete method after testing
-        if( company.getID() == 3 ) {
-            company.setState(State.CALLING);
-            company.getState().setUser(new User("A", "secretB"));
-        }
-        else if( company.getID() == 6 ) {
-            company.setState(State.CALLING_TIMEOUT);
-            company.getState().setUser(new User("X", "secretY"));
-        }
-        else if( company.getID() == 9 ) {
-            company.setState(State.OCCUPIED);
-            company.getState().setUser(new User("R", "secretT"));
-        }
-        else if( company.getID() == 12 )
-            company.setState(State.PAUSED);
+        App.consoleLog("Companies", companiesManager.toString());
     }
 
     public void shutdown() {
@@ -152,6 +133,74 @@ public class Model {
     }
 
     // ===
+
+    public enum Action {
+        USER_REGISTER_IN_COMPANIES,
+        CALLING_TIMEDOUT
+    }
+
+    /**
+     * Model may have been changed after this method completes.
+     * This method should be <b>only called as part of a {@link gr.uop.Task#run()} method</b> to avoid sharing data collisions.
+     * @param user if the action requires, else null (check switch for specifics)
+     * @param companyIDs if the action requires, else skip the parameter
+     */
+    public void handleAction(Action action, User user, int... companyIDs) {
+        boolean didAction = false;
+
+        switch (action) {
+            case USER_REGISTER_IN_COMPANIES:
+                didAction = companyIDs.length > 0 && user != null;
+                if (!didAction) {
+                    App.consoleLogError("Can't handle \"" + action + "\".",
+                            "Requires more than 0 companies and user not null.");
+                    break;
+                }
+
+                // ===
+
+                for (int companyID : companyIDs)
+                    companiesManager.get(companyID).add(user);
+
+                // ===
+
+                break;
+
+            case CALLING_TIMEDOUT:
+                didAction = companyIDs.length == 1 && user == null;
+                if (!didAction) {
+                    App.consoleLogError("Can't handle \"" + action + "\".",
+                        "Requires exactly 1 company and null user.");
+                    break;
+                }
+
+                // ===
+
+                var company = companiesManager.get(companyIDs[0]);
+                user = company.getStateUser();
+                company.setState(State.CALLING_TIMEOUT);
+                company.setStateUser(user);
+
+                // ===
+
+                break;
+        }
+
+        if (didAction) {
+            this.companiesManager.getAll().forEach(c -> {
+                c.update(this);
+            });
+            App.network.updateSubscribers(Subscription.PUBLIC_MONITOR, Subscription.MANAGER);
+        }
+    }
+
+    public User createUser(String name, String secret) {
+        var user = new User(name, secret);
+
+        usersManager.add(user);
+
+        return user;
+    }
 
     /**
      * @return {@code null} when unable to find user, user does not exist (or failed to find)
@@ -198,53 +247,39 @@ public class Model {
     }
 
     private JSONObject toJSONManager(boolean onlyChanged) {
-        try {
-            // TODO (public monitor + user queues) + convert values to strings and to arrays of strings
-            String expecting = """
-                    {
-                        "companies" : [
-                            {
-                                "id" : 0,
-                                "state" : "calling",
-                                "user-id" : 14,
-                                "user-id-queue-waiting": [6,2,4],
-                                "user-id-queue-unavailable": [12,4,9,6]
-                            },
-                            {
-                                "id" : 5,
-                                "state" : "calling-timeout",
-                                "user-id" : 3,
-                                "user-id-queue-waiting": [6,2,4],
-                                "user-id-queue-unavailable": [12,4,9,6]
-                            },
-                            {
-                                "id" : 12,
-                                "state" : "occupied",
-                                "user-id" : 9,
-                                "user-id-queue-waiting": [6,2,4],
-                                "user-id-queue-unavailable": [12,4,9,6]
-                            },
-                            {
-                                "id" : 2,
-                                "state" : "available",
-                                "user-id" : -1,
-                                "user-id-queue-waiting": [6,2,4],
-                                "user-id-queue-unavailable": [12,4,9,6]
-                            },
-                            {
-                                "id" : 7,
-                                "state" : "paused",
-                                "user-id" : -1,
-                                "user-id-queue-waiting": [6,2,4],
-                                "user-id-queue-unavailable": [12,4,9,6]
-                            }
-                        ]
-                    }
-                        """;
-            return (JSONObject) new JSONParser().parse(expecting);
-        } catch (ParseException e) {
-            return new JSONObject();
+        JSONArray arr = new JSONArray();
+
+        if (onlyChanged) {
+
+        } else /* contain all companies */ {
+            companiesManager.getAll().forEach(company -> {
+                var json = new JSONObject();
+                var state = company.getState();
+                var user = company.getStateUser();
+
+                json.put("id", "" + company.getID());
+                json.put("state", "" + company.getState().toString());
+                if (state.equals(State.CALLING))
+                    json.put("elapsed-in-sec", "" + company.getStateCountdown().elapsed());
+                json.put("user-id", "" + (user != null ? user.getID() : -1));
+
+                var qWaiting = new JSONArray();
+                var qUnavailable = new JSONArray();
+                for (User iUser : company.getUnmodifiableQueue()) {
+                    if (iUser.is(Status.WAITING))
+                        qWaiting.add(iUser.getID());
+                    else
+                        qUnavailable.add(iUser.getID());
+                }
+                json.put("user-id-queue-waiting", qWaiting);
+                json.put("user-id-queue-unavailable", qUnavailable);
+
+                arr.add(json);
+            });
         }
+
+        var map = new HashMap<String, JSONArray>(Map.of("companies", arr));
+        return new JSONObject(map);
     }
 
     private JSONObject toJSONPublicMonitor(boolean onlyChanged) {
@@ -256,12 +291,13 @@ public class Model {
             companiesManager.getAll().forEach(company -> {
                 var map = new HashMap<String, String>();
                 var state = company.getState();
-                var user = state.getUser();
+                var user = company.getStateUser();
 
                 map.put("id", "" + company.getID());
                 map.put("state", "" + company.getState().toString());
                 map.put("user-id", "" + (user != null ? user.getID() : -1));
-                // TODO send time as well if state has timer. In case that a timer has started but a new client connected, the timer must go on from the already timer not from 00:00. In cases that the state just changed, send timer 0 to keep it uniform in all cases.
+                if (state.equals(State.CALLING))
+                    map.put("elapsed-in-sec", "" + company.getStateCountdown().elapsed());
 
                 arr.add(new JSONObject(map));
             });
