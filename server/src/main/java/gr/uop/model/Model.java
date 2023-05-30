@@ -140,7 +140,7 @@ public class Model {
         PAUSE("pause"),
         RESUME("resume");
 
-        private final String value;
+        public final String value;
 
         private ManagerAction(String value) {
             this.value = value;
@@ -219,7 +219,12 @@ public class Model {
                 
                 // ===
                 
-                // DOING
+                // CHECK
+                company = getCompany(companyIDs[0]);
+
+                company.setState(State.PAUSED);
+
+                didAction = true;
 
                 // ===
 
@@ -231,20 +236,38 @@ public class Model {
 
                 // ===
                 
-                // DOING
+                // CHECK
+                company = getCompany(companyIDs[0]);
+                user = company.getStateUser();
+
+                company.setState(State.OCCUPIED);
+                company.setStateUser(user);
+
+                user.isNow(Status.INTERVIEW);
+
+                didAction = true;
 
                 // ===
 
                 break;
             case MANAGER_CALLING_DISCARD:
+            case MANAGER_CALLINGTIMEOUT_DISCARD:
+            case MANAGER_OCCUPIED_COMPLETED:
                 if (validArgumentsForActionsThatManagerTriggers(action, user, companyIDs))
                     break;
 
                 // ===
                 
-                // DOING
-                
-                changeStateToCallingOrAvailable(companyIDs[0]);
+                // CHECK
+                company = getCompany(companyIDs[0]);
+                user = company.getStateUser();
+
+                company.remove(user);
+                company.setState(State.AVAILABLE);
+
+                user.getCompaniesRegisteredAt().remove(company);
+                user.isNow(Status.WAITING);
+
                 didAction = true;
                 
                 // ===
@@ -256,34 +279,14 @@ public class Model {
 
                 // ===
                 
-                // DOING
+                // CHECK
+                company = getCompany(companyIDs[0]);
+                user = company.getStateUser();
 
-                // ===
+                company.setState(State.PAUSED);
+                
+                user.isNow(Status.WAITING);
 
-                break;
-            case MANAGER_CALLINGTIMEOUT_DISCARD:
-                if (validArgumentsForActionsThatManagerTriggers(action, user, companyIDs))
-                    break;
-
-                // ===
-                
-                // DOING
-                
-                changeStateToCallingOrAvailable(companyIDs[0]);
-                didAction = true;
-                
-                // ===
-
-                break;
-            case MANAGER_OCCUPIED_COMPLETED:
-                if (validArgumentsForActionsThatManagerTriggers(action, user, companyIDs))
-                    break;
-
-                // ===
-                
-                // DOING
-                
-                changeStateToCallingOrAvailable(companyIDs[0]);
                 didAction = true;
                 
                 // ===
@@ -295,7 +298,17 @@ public class Model {
 
                 // ===
                 
-                // DOING
+                // CHECK
+                company = getCompany(companyIDs[0]);
+                user = company.getStateUser();
+
+                company.remove(user);
+                company.setState(State.PAUSED);
+
+                user.getCompaniesRegisteredAt().remove(company);
+                user.isNow(Status.WAITING);
+                
+                didAction = true;
 
                 // ===
 
@@ -306,9 +319,11 @@ public class Model {
 
                 // ===
                 
-                // DOING
-                
-                changeStateToCallingOrAvailable(companyIDs[0]);
+                // CHECK
+                company = getCompany(companyIDs[0]);
+
+                company.setState(State.AVAILABLE);
+
                 didAction = true;
 
                 // ===
@@ -322,10 +337,6 @@ public class Model {
             });
             App.network.updateSubscribers(Subscription.PUBLIC_MONITOR, Subscription.MANAGER);
         }
-    }
-
-    private void changeStateToCallingOrAvailable(int companyID) {
-        getCompany(companyID).setState(State.AVAILABLE);
     }
 
     private boolean validArgumentsForActionsThatManagerTriggers(Action action, User user, int[] companyIDs) {

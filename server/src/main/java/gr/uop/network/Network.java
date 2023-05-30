@@ -262,16 +262,28 @@ public class Network {
                         int companyID = -1;
                         State companyState = null;
                         try {
-                            managerAction = ManagerAction.valueOf(strManagerAction);
+                            for (ManagerAction ma : ManagerAction.values()) {
+                                if( ma.value.equals(strManagerAction)) {
+                                    managerAction = ma;
+                                    break;
+                                }
+                            }
+
                             companyID = Integer.valueOf(strCompanyID);
-                            companyState = State.valueOf(strCompanyState);
+
+                            for (State st : State.values()) {
+                                if( st.value.equals(strCompanyState)) {
+                                    companyState = st;
+                                    break;
+                                }
+                            }
                         } catch(Exception e) { }
                         
                         Action action = null;
                         boolean canDoAction = false;
 
                         if (managerAction != null && companyID != -1 && companyState != null
-                                && !companyState.equals(model.getCompany(companyID).getState())) {
+                                && companyState.equals(model.getCompany(companyID).getState())) {
 
                             if (companyState.equals(State.AVAILABLE)
                                     && managerAction.equals(ManagerAction.PAUSE)) {

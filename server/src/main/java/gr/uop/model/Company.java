@@ -20,7 +20,7 @@ public class Company {
         OCCUPIED("occupied"),
         PAUSED("paused");
 
-        private final String value;
+        public final String value;
 
         private State(String value) {
             this.value = value;
@@ -48,7 +48,7 @@ public class Company {
         this.name = name;
         this.tableNumber = tableNumber;
 
-        this.state = State.AVAILABLE;
+        this.state = State.PAUSED;
         this.companyQueue = new LinkedList<>();
         this.update = 0;
     }
@@ -57,8 +57,7 @@ public class Company {
      * @return {@code true} when changes occured, else {@code false}
      */
     public void update(Model model) {
-        boolean didUpdate = false;
-
+        update++;
         switch(this.state) {
             case AVAILABLE:
                 User waitingUser = null;
@@ -71,12 +70,9 @@ public class Company {
                 }
                 
                 if(waitingUser == null)
-                    break;                
+                    break;
 
-                didUpdate = true; // ===
-
-                var validUpdateToTriggerCallingTimeout
-                    = update + 1; // the one happening now has not been counted yet
+                var validUpdateToTriggerCallingTimeout = update;
                 var countdown = new Countdown(MAX_CALLING_SECONDS, () -> {
                     App.TASK_PROCESSOR.process(() -> {
                         if (validUpdateToTriggerCallingTimeout == update) {
@@ -96,20 +92,16 @@ public class Company {
                 break;
 
             case CALLING:
-                break;
-
             case CALLING_TIMEOUT:
-                break;
-
             case OCCUPIED:
-                break;
-
             case PAUSED:
+                // change occured before update call
                 break;
         }
+    }
 
-        if(didUpdate)
-            update++;
+    public void remove(User user) {
+        companyQueue.remove(user);
     }
 
     public void add(User user) {
