@@ -94,7 +94,7 @@ public class ExternalCompanyView extends VBox{
         if(state.equals("calling"))
             return App.Alerts.managerCallingState(userId);
         else if (state.equals("paused"))
-            return  App.Alerts.managerPauseState(userId);
+            return  App.Alerts.managerPauseState();
         else if(state.equals("occupied"))
             return App.Alerts.managerOcuppiedState(userId);
         else if(state.equals("available")){
@@ -115,6 +115,11 @@ public class ExternalCompanyView extends VBox{
     }
 
     public void setAvailiable(){
+        System.out.println(timer);
+        if(timer!=null){
+            timer.stop();
+        }
+
         state = "available";
         if(infoContainer.getStyleClass().size()>0)
             infoContainer.getStyleClass().remove(0);
@@ -125,6 +130,9 @@ public class ExternalCompanyView extends VBox{
     }
 
     public void setCalling(String userid,int time){
+        if(timer!=null){
+            timer.stop();
+        }
         state = "calling";
         userId = userid;
         infoContainer.getStyleClass().remove(0);

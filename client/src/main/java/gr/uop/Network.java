@@ -126,7 +126,6 @@ public class Network {
                         data[i].add(obj.get("id"));
                         data[i].add(obj.get("state"));
                         
-                        System.out.println(obj.get("state")+"");
                         if((obj.get("state")+"").equals("calling")){
                             data[i].add(obj.get("elapsed-in-sec"));
                         }
@@ -147,12 +146,11 @@ public class Network {
                         data[i].add(obj.get("user-id"));
                         data[i].add(obj.get("id"));
                         data[i].add(obj.get("state"));
-                        System.out.println(obj.get("state")+"");
+                        data[i].add(obj.get("user-id-queue-unavailable"));
+                        data[i].add(obj.get("user-id-queue-waiting"));
                         if((obj.get("state")+"").equals("calling")){
                             data[i].add(obj.get("elapsed-in-sec"));
                         }
-                        data[i].add(obj.get("user-id-queue-unavailable"));
-                        data[i].add(obj.get("user-id-queue-waiting"));
                     }
                     ((ControllerManager) App.CONTROLLER).updateEnvironment(data);
                 }
@@ -224,7 +222,6 @@ public class Network {
                  */
                 break;
             case "user-insert":
-
                 data = new ArrayList[decoded.size()];
                 for (int i = 0; i < data.length; i++) {
                     data[i] = new ArrayList<Object>(); // create a new ArrayList for each element

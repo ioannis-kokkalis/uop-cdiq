@@ -68,7 +68,7 @@ public class ControllerSecretary extends BaseController {
                 headerText = "User found succesfully";
                 mainText = "User with systemId "+data[2].get(0)+" name "+data[1].get(0)+" and id "+data[3].get(0)+" was found and is registered in companies: ";
                 for (int i = 0; i < data[4].size(); i++) {
-                    mainText = mainText + companyBlocks.get(data[4].get(i));   
+                    mainText = mainText + companyBlocks.get(data[4].get(i))+" ";   
                 }
             }
             else{
@@ -98,7 +98,7 @@ public class ControllerSecretary extends BaseController {
 
             if(data[0].get(0).equals("ok")){
                 headerText = "User was succesfully inserted in companies";
-                mainText = "User with systemid "+data[2].get(0)+" name "+data[1].get(0)+" and id "+data[3].get(0)+" and has registered in companies: "+data[4].toString();
+                mainText = "User with systemid "+data[2].get(0)+" name "+data[1].get(0)+" and id "+data[3].get(0)+" has succesfully registered";
             }
             else{
                 headerText = "User not found";

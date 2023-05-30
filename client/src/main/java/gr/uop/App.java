@@ -274,14 +274,14 @@ public class App extends Application {
             
         }
 
-        public static String managerPauseState(String userid){
+        public static String managerPauseState(){
             Dialog<String> dialog = new Dialog<>();
             dialog.initOwner(stage);
             dialog.setTitle("Manager Action");
 
             VBox choiceContainer = new VBox();
 
-            Label mainText = new Label("Waiting Action for "+userid);
+            Label mainText = new Label("Waiting for action");
 
             ButtonType resume = new ButtonType("Resume");
             
@@ -295,7 +295,6 @@ public class App extends Application {
             dialog.getDialogPane().getButtonTypes().addAll(resume,close);
 
             dialog.setResultConverter((button) -> {
-                System.out.println(button);
                 if (button == resume) {
                    return "resume";
                 }
@@ -316,7 +315,6 @@ public class App extends Application {
         }
 
         public static String managerAvailiableState(){
-            System.out.println("ok");
             Dialog<String> dialog = new Dialog<>();
             dialog.initOwner(stage);
             dialog.setTitle("Manager Action");
