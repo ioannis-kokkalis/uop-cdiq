@@ -125,6 +125,11 @@ public class Network {
                         data[i].add(obj.get("user-id"));
                         data[i].add(obj.get("id"));
                         data[i].add(obj.get("state"));
+                        
+                        System.out.println(obj.get("state")+"");
+                        if((obj.get("state")+"").equals("calling")){
+                            data[i].add(obj.get("elapsed-in-sec"));
+                        }
 
                     }
                     ((ControllerPublicMonitor) App.CONTROLLER).updateEnvironment(data);
@@ -142,6 +147,10 @@ public class Network {
                         data[i].add(obj.get("user-id"));
                         data[i].add(obj.get("id"));
                         data[i].add(obj.get("state"));
+                        System.out.println(obj.get("state")+"");
+                        if((obj.get("state")+"").equals("calling")){
+                            data[i].add(obj.get("elapsed-in-sec"));
+                        }
                         data[i].add(obj.get("user-id-queue-unavailable"));
                         data[i].add(obj.get("user-id-queue-waiting"));
                     }
@@ -192,7 +201,7 @@ public class Network {
                  */
                 break;
             case "user-register":
-                data = new ArrayList[decoded.size()];
+               data = new ArrayList[decoded.size()];
                 for (int i = 0; i < data.length; i++) {
                     data[i] = new ArrayList<Object>(); // create a new ArrayList for each element
                 }
@@ -222,10 +231,11 @@ public class Network {
                 }
 
                 data[0].add(decoded.get("result"));
-                data[1].add(decoded.get("name"));
+                
+                if(decoded.get("name")!=null)
+                    data[1].add(decoded.get("name"));
 
-                if(decoded.get("id")!=null)
-                    data[2].add(decoded.get("id"));
+                data[2].add(decoded.get("id"));
 
                 if(decoded.get("secret")!=null) 
                     data[3].add(decoded.get("secret"));
@@ -249,6 +259,17 @@ public class Network {
                  * }
                  */
                 break;
+            case "manager":
+                data = new ArrayList[decoded.size()];
+                for (int i = 0; i < data.length; i++) {
+                    data[i] = new ArrayList<Object>(); // create a new ArrayList for each element
+                }
+
+                data[0].add(decoded.get("result"));
+
+                ((ControllerManager)App.CONTROLLER).informUser(data[0].get(0)+"");
+
+            break;
             default:
                 App.consoleLogError("Unknown Server Said", serverSaid);
         }

@@ -9,6 +9,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
@@ -19,6 +20,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
@@ -29,6 +31,8 @@ import java.util.Optional;
 import java.util.concurrent.Semaphore;
 
 import org.json.simple.JSONArray;
+
+import gr.uop.ControllerSecretary.Media;
 
 public class App extends Application {
 
@@ -132,6 +136,226 @@ public class App extends Application {
 
     public static class Alerts {
 
+        public static String managerCallingState(String userid){
+            Dialog<String> dialog = new Dialog<>();
+            dialog.initOwner(stage);
+            dialog.setTitle("Manager Action");
+
+            VBox choiceContainer = new VBox();
+
+            Label mainText = new Label("Calling "+userid);
+
+            ButtonType arrived = new ButtonType("Arrived");
+            ButtonType pause = new ButtonType("Pause");
+            ButtonType discard = new ButtonType("Discard");
+            
+            ButtonType close = ButtonType.CLOSE;
+
+            choiceContainer.getChildren().addAll(mainText);
+            choiceContainer.setAlignment(Pos.CENTER);
+
+            dialog.getDialogPane().setContent(choiceContainer);
+
+            dialog.getDialogPane().getButtonTypes().addAll(arrived,pause,discard,close);
+
+            dialog.setResultConverter((button) -> {
+                System.out.println(button);
+                if (button == arrived) {
+                   return "arrived";
+                }
+                else if(button == pause){
+                    return "pause";
+                }
+                else if(button == discard){
+                    return "discard";
+                }
+                else {
+                    return null;
+                }
+            });
+
+
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                return result.get();
+            }
+            else {
+                return null;
+            }
+        }
+
+        public static String managerFrozenState(String userid){
+            Dialog<String> dialog = new Dialog<>();
+            dialog.initOwner(stage);
+            dialog.setTitle("Manager Action");
+
+            VBox choiceContainer = new VBox();
+
+            Label mainText = new Label("Waiting Action for "+userid);
+
+            ButtonType arrived = new ButtonType("Arrived");
+            ButtonType discard = new ButtonType("Discard");
+            
+            ButtonType close = ButtonType.CLOSE;
+
+            choiceContainer.getChildren().addAll(mainText);
+            choiceContainer.setAlignment(Pos.CENTER);
+
+            dialog.getDialogPane().setContent(choiceContainer);
+
+            dialog.getDialogPane().getButtonTypes().addAll(arrived,discard,close);
+
+            dialog.setResultConverter((button) -> {
+                System.out.println(button);
+                if (button == arrived) {
+                   return "arrived";
+                }
+                else if(button == discard){
+                    return "discard";
+                }
+                else {
+                    return null;
+                }
+            });
+
+
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                return result.get();
+            }
+            else {
+                return null;
+            }
+            
+        }
+
+        public static String managerOcuppiedState(String userid){
+            Dialog<String> dialog = new Dialog<>();
+            dialog.initOwner(stage);
+            dialog.setTitle("Manager Action");
+
+            VBox choiceContainer = new VBox();
+
+            Label mainText = new Label("Waiting Action for "+userid);
+
+            ButtonType completed = new ButtonType("Completed");
+            ButtonType completedPause = new ButtonType("Completed & Pause");
+            
+            ButtonType close = ButtonType.CLOSE;
+
+            choiceContainer.getChildren().addAll(mainText);
+            choiceContainer.setAlignment(Pos.CENTER);
+
+            dialog.getDialogPane().setContent(choiceContainer);
+
+            dialog.getDialogPane().getButtonTypes().addAll(completed,completedPause,close);
+
+            dialog.setResultConverter((button) -> {
+                System.out.println(button);
+                if (button == completed) {
+                   return "completed";
+                }
+                else if(button == completedPause){
+                    return "completed-pause";
+                }
+                else {
+                    return null;
+                }
+            });
+
+
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                return result.get();
+            }
+            else {
+                return null;
+            }
+            
+        }
+
+        public static String managerPauseState(String userid){
+            Dialog<String> dialog = new Dialog<>();
+            dialog.initOwner(stage);
+            dialog.setTitle("Manager Action");
+
+            VBox choiceContainer = new VBox();
+
+            Label mainText = new Label("Waiting Action for "+userid);
+
+            ButtonType resume = new ButtonType("Resume");
+            
+            ButtonType close = ButtonType.CLOSE;
+
+            choiceContainer.getChildren().addAll(mainText);
+            choiceContainer.setAlignment(Pos.CENTER);
+
+            dialog.getDialogPane().setContent(choiceContainer);
+
+            dialog.getDialogPane().getButtonTypes().addAll(resume,close);
+
+            dialog.setResultConverter((button) -> {
+                System.out.println(button);
+                if (button == resume) {
+                   return "resume";
+                }
+                else {
+                    return null;
+                }
+            });
+
+
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                return result.get();
+            }
+            else {
+                return null;
+            }
+            
+        }
+
+        public static String managerAvailiableState(){
+            Dialog<String> dialog = new Dialog<>();
+            dialog.initOwner(stage);
+            dialog.setTitle("Manager Action");
+
+            VBox choiceContainer = new VBox();
+
+            Label mainText = new Label("Availiable");
+
+            ButtonType pause = new ButtonType("Pause");
+            
+            ButtonType close = ButtonType.CLOSE;
+
+            choiceContainer.getChildren().addAll(mainText);
+            choiceContainer.setAlignment(Pos.CENTER);
+
+            dialog.getDialogPane().setContent(choiceContainer);
+
+            dialog.getDialogPane().getButtonTypes().addAll(pause,close);
+
+            dialog.setResultConverter((button) -> {
+                System.out.println(button);
+                if (button == pause) {
+                   return "arrived";
+                }
+                else {
+                    return null;
+                }
+            });
+
+
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                return result.get();
+            }
+            else {
+                return null;
+            }
+            
+        }
+
         public static void managerViewQueue(String comapnyName,JSONArray waitingList,JSONArray unavailiableList){
             Dialog<Integer> dialog = new Dialog<>();
             dialog.initOwner(stage);
@@ -168,7 +392,7 @@ public class App extends Application {
             
         }
 
-        public static void secretaryInformUser(String mainText, String headerText){
+        public static void InformUser(String mainText, String headerText){
             var alert = new Alert(AlertType.INFORMATION);
             alert.initModality(Modality.APPLICATION_MODAL);
             alert.initOwner(stage);
@@ -178,15 +402,13 @@ public class App extends Application {
             alert.show();
         }
 
-        public static String secretaryConfirmInsert(){
+        public static String secretaryConfirmInsert(Media list){
             Alert alert = new Alert(AlertType.CONFIRMATION);
             alert.setTitle("Confirmation");
-            alert.setContentText("Do you want to proceed");
+            alert.setContentText("Do you want to proceed inserting a user into companies "+list);
             alert.setHeaderText(null);
             alert.initModality(Modality.WINDOW_MODAL);
             alert.initOwner(stage);
-
-            alert.getButtonTypes().add(ButtonType.CLOSE);
           
             Optional<ButtonType> result = alert.showAndWait();
             if (result.get() == ButtonType.OK) {

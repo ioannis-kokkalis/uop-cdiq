@@ -41,6 +41,8 @@ public class ControllerSecretary extends BaseController {
 
     String logoUrls = "media/company-logo/";
 
+    HashMap<String,InternalCompanyView> companyBlocks = new HashMap<>();
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         App.CONTROLLER = this;
@@ -53,6 +55,7 @@ public class ControllerSecretary extends BaseController {
             for (int i = 0; i < data.length; i++) {
                 InternalCompanyView company =  new InternalCompanyView(logoUrls+""+data[i].get(0)+".png", data[i].get(1)+"",list,data[i].get(2)+"");
                 companiesContainer.getChildren().add(company);
+                companyBlocks.put(data[i].get(2)+"",company);
             }
         });
     }
@@ -63,13 +66,16 @@ public class ControllerSecretary extends BaseController {
 
             if(data[0].get(0).equals("found")){
                 headerText = "User found succesfully";
-                mainText = "User with systemId "+data[2].get(0)+" name "+data[1].get(0)+" and id "+data[3].get(0)+" was found and is registered in companies: "+data[4].toString();
+                mainText = "User with systemId "+data[2].get(0)+" name "+data[1].get(0)+" and id "+data[3].get(0)+" was found and is registered in companies: ";
+                for (int i = 0; i < data[4].size(); i++) {
+                    mainText = mainText + companyBlocks.get(data[4].get(i));   
+                }
             }
             else{
                 headerText = "User not found";
                 mainText = "User with systemId "+data[2].get(0)+" name "+data[1].get(0)+" and id "+data[3].get(0)+" was not found";
             }
-            App.Alerts.secretaryInformUser(mainText, headerText);
+            App.Alerts.InformUser(mainText, headerText);
             App.scene.getRoot().setDisable(false);
         });
     }
@@ -80,7 +86,7 @@ public class ControllerSecretary extends BaseController {
             String headerText = "User was successfully inserted with code: "+data[2].get(0);
             String mainText = "User with name "+ data[1].get(0) +" and id "+data[3].get(0); 
 
-            App.Alerts.secretaryInformUser(mainText, headerText);
+            App.Alerts.InformUser(mainText, headerText);
             App.scene.getRoot().setDisable(false);
         });
 
@@ -96,10 +102,10 @@ public class ControllerSecretary extends BaseController {
             }
             else{
                 headerText = "User not found";
-                mainText = "User with systemid "+data[2].get(0)+" name "+data[1].get(0)+" and id "+data[3].get(0)+" was not found";
+                mainText = "User with systemid "+data[2].get(0)+" was not found";
             }
 
-            App.Alerts.secretaryInformUser(mainText, headerText);
+            App.Alerts.InformUser(mainText, headerText);
             App.scene.getRoot().setDisable(false);
         });
 
@@ -120,6 +126,10 @@ public class ControllerSecretary extends BaseController {
 
         if((inputUserId.getText().isEmpty())&&(inputName.getText().isEmpty()||inputId.getText().isEmpty())){
             App.Alerts.secretaryIllegalSearch("Please fill either userid or name and id to complete the insert");
+            return;
+        }
+        else if(list.isEmpty()){
+            App.Alerts.secretaryIllegalSearch("Please select a company");
             return;
         }
         else if(!inputUserId.getText().isEmpty()) {
@@ -154,12 +164,12 @@ public class ControllerSecretary extends BaseController {
             
         }
 
-        if(App.Alerts.secretaryConfirmInsert().equals("OK")){
+        if(App.Alerts.secretaryConfirmInsert(list).equals("OK")){
             App.NETWORK.send(Packet.encode(new JSONObject(map)));
             App.scene.getRoot().setDisable(true);
+
         }
-        else
-            clear();
+        clear();
         
     }
 
@@ -204,6 +214,14 @@ public class ControllerSecretary extends BaseController {
                 companyView.resetStatus();
             }
             selectedCompanies.clear();
+        }
+
+        public boolean isEmpty(){
+            return selectedCompanies.isEmpty();
+        }
+        
+        public String toString(){
+            return selectedCompanies.toString();
         }
     }
 }

@@ -54,6 +54,11 @@ public class InternalCompanyView extends VBox{
         status.getStyleClass().add("color-background-notselected");
     }
 
+
+    public String toString(){
+        return name.getText();
+    }
+
     
 
 

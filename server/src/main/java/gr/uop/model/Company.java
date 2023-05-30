@@ -11,7 +11,7 @@ import gr.uop.model.User.Status;
 
 public class Company {
 
-    private final static int MAX_CALLING_SECONDS = 10; // TODO change to 3 minutes (3*60)
+    private final static int MAX_CALLING_SECONDS = 20; // TODO change to 3 minutes (3*60)
 
     public enum State {
         AVAILABLE("available"),

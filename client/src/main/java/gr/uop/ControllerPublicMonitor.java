@@ -33,16 +33,17 @@ public class ControllerPublicMonitor extends BaseController {
         });
     }
 
-    public void updateEnvironment( ArrayList<Object>[] data){
+    public void updateEnvironment(ArrayList<Object>[] data){
         Platform.runLater(()->{
             for (int i = 0; i < data.length; i++) {
+                System.out.println(data[i].get(1));
                 ExternalCompanyView company =  companyBlocks.get(data[i].get(1)+"");
                 String state = data[i].get(2)+"";
                 System.out.println(state);
                 if(state.equals("available"))
                     company.setAvailiable();
                 else if(state.equals("calling"))
-                    company.setCalling(data[i].get(0)+"");
+                    company.setCalling(data[i].get(0)+"",Integer.parseInt(data[i].get(3)+""));
                 else if(state.equals("occupied"))
                     company.setOccupied(data[i].get(0)+"");
                 else if(state.equals("paused"))

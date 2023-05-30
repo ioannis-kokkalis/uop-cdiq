@@ -44,7 +44,7 @@ public class ControllerManager extends BaseController {
                 if(state.equals("available"))
                     company.setAvailiable();
                 else if(state.equals("calling"))
-                    company.setCalling(data[i].get(0)+"");
+                    company.setCalling(data[i].get(0)+"",Integer.parseInt(data[i].get(3)+""));
                 else if(state.equals("occupied"))
                     company.setOccupied(data[i].get(0)+"");
                 else if(state.equals("paused"))
@@ -60,6 +60,15 @@ public class ControllerManager extends BaseController {
                 company.setWaitingQueue(waitingQueue);
             }
         });
+    }
+
+    public void informUser(String answer){
+        if(answer.equals("ok")){
+            App.Alerts.InformUser("Succesful Change", "Action has been completed succesfully");
+        }
+        else
+            App.Alerts.InformUser("Unsuccesful Change", "There was an error with our action please try again later");
+        App.scene.getRoot().setDisable(false);
     }
 
 }
