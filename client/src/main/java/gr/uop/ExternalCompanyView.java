@@ -73,7 +73,7 @@ public class ExternalCompanyView extends VBox{
 
         infoContainer.setOnMouseClicked(e -> {
             String currentId = id;
-            String currentState = id;
+            String currentState = state;
 
             String choice = chooseAlert();
             if(choice!=null){
