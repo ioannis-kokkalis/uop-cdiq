@@ -339,7 +339,7 @@ public class App extends Application {
             dialog.setResultConverter((button) -> {
                 System.out.println(button);
                 if (button == pause) {
-                   return "arrived";
+                   return "pause";
                 }
                 else {
                     return null;

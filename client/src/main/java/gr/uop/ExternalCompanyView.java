@@ -179,7 +179,7 @@ public class ExternalCompanyView extends VBox{
     }
 
     public void setOccupied(String userid){
-        state = "ocupied";
+        state = "occupied";
         userId = userid;
         if(timer!=null)
             timer.stop();

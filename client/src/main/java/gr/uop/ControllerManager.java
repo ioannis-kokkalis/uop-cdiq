@@ -44,7 +44,7 @@ public class ControllerManager extends BaseController {
                 if(state.equals("available"))
                     company.setAvailiable();
                 else if(state.equals("calling"))
-                    company.setCalling(data[i].get(0)+"",Integer.parseInt(data[i].get(3)+""));
+                    company.setCalling(data[i].get(0)+"",Integer.parseInt(data[i].get(3)+"")); // BUG
                 else if(state.equals("occupied"))
                     company.setOccupied(data[i].get(0)+"");
                 else if(state.equals("paused"))
@@ -53,7 +53,7 @@ public class ControllerManager extends BaseController {
                     company.setFrozen(data[i].get(0)+"");
                 
                 
-                JSONArray unavailiableQueue = (JSONArray)data[i].get(3);
+                JSONArray unavailiableQueue = (JSONArray)data[i].get(3); // BUG
                 JSONArray waitingQueue = (JSONArray)data[i].get(4);
                 
                 company.setUnavailiableQueue(unavailiableQueue);
