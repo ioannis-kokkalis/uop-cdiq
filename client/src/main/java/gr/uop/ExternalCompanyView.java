@@ -72,14 +72,17 @@ public class ExternalCompanyView extends VBox{
         });
 
         infoContainer.setOnMouseClicked(e -> {
+            String currentId = id;
+            String currentState = id;
+
             String choice = chooseAlert();
             if(choice!=null){
                 JSONObject map = new JSONObject();
             
                 map.put("request", "manager");
                 map.put("action",choice);
-                map.put("company-id",id);
-                map.put("company-state",state);
+                map.put("company-id",currentId);
+                map.put("company-state",currentState);
 
                 App.NETWORK.send(Packet.encode(new JSONObject(map)));
                 App.scene.getRoot().setDisable(true);
@@ -94,8 +97,10 @@ public class ExternalCompanyView extends VBox{
             return  App.Alerts.managerPauseState(userId);
         else if(state.equals("occupied"))
             return App.Alerts.managerOcuppiedState(userId);
-        else if(state.equals("available"))
+        else if(state.equals("available")){
+            
             return App.Alerts.managerAvailiableState();
+        }
         else
             return App.Alerts.managerFrozenState(userId);
     }
@@ -110,7 +115,7 @@ public class ExternalCompanyView extends VBox{
     }
 
     public void setAvailiable(){
-        state = "availiable";
+        state = "available";
         if(infoContainer.getStyleClass().size()>0)
             infoContainer.getStyleClass().remove(0);
         infoContainer.getStyleClass().add("color-background-available");

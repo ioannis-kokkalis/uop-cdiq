@@ -316,6 +316,7 @@ public class App extends Application {
         }
 
         public static String managerAvailiableState(){
+            System.out.println("ok");
             Dialog<String> dialog = new Dialog<>();
             dialog.initOwner(stage);
             dialog.setTitle("Manager Action");
