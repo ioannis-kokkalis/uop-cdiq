@@ -63,12 +63,14 @@ public class ControllerManager extends BaseController {
     }
 
     public void informUser(String answer){
-        if(answer.equals("ok")){
-            App.Alerts.InformUser("Succesful Change", "Action has been completed succesfully");
-        }
-        else
-            App.Alerts.InformUser("Unsuccesful Change", "There was an error with our action please try again later");
-        App.scene.getRoot().setDisable(false);
+        Platform.runLater(()->{
+            if(answer.equals("ok")){
+                App.Alerts.InformUser("Succesful Change", "Action has been completed succesfully");
+            }
+            else
+                App.Alerts.InformUser("Unsuccesful Change", "There was an error with our action please try again later");
+            App.scene.getRoot().setDisable(false);
+        });
     }
 
 }
