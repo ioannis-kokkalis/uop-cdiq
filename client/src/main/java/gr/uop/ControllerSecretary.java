@@ -167,9 +167,8 @@ public class ControllerSecretary extends BaseController {
         if(App.Alerts.secretaryConfirmInsert(list).equals("OK")){
             App.NETWORK.send(Packet.encode(new JSONObject(map)));
             App.scene.getRoot().setDisable(true);
-
+            clear();
         }
-        clear();
         
     }
 
