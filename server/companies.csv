@@ -1,17 +1,16 @@
 id,table,name
-0,1,Accenture
-1,2,eShare
-2,3,Founderhood
-3,4,INTERAMERICAN
-4,5,Juniper Networks
-5,6,ManPower
-6,7,NETCOMPANY-INTRASOFT
-7,8,Oracle
-8,9,OTE
-9,10,Qurio
-10,11,Singular Logic
-11,12,Space Hellas
-12,13,Startup Greece
-13,14,Trebbble
-14,15,UniSystems
-15,16,Yodec
+0,1,INTERAMERICAN
+1,2,Oracle
+2,3,NETCOMPANY-INTRASOFT
+3,4,Yodec
+4,5,UniSystems
+5,6,Juniper Networks
+6,7,Accenture
+7,8,OTE
+8,9,Singular Logic
+9,10,Space Hellas
+10,11,eShare
+11,12,Trebbble
+12,13,ManPower
+13,14,Startup Greece | Founderhood
+14,16,Sc!fy
