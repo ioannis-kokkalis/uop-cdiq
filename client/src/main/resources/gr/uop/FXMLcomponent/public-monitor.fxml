@@ -5,14 +5,14 @@
 <?import javafx.scene.layout.TilePane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" styleClass="color-background-idle" stylesheets="@../style/style.css" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gr.uop.ControllerPublicMonitor">
+<StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gr.uop.ControllerPublicMonitor">
    <children>
-      <VBox alignment="CENTER" fillWidth="false" StackPane.alignment="CENTER">
+      <VBox alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="default-background" StackPane.alignment="CENTER">
          <children>
-            <TilePane fx:id="companiesContainer" alignment="CENTER_LEFT" prefColumns="4">
+            <TilePane fx:id="companiesContainer" alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefColumns="4">
                <styleClass>
-                  <String fx:value="gaping-h-less" />
-                  <String fx:value="gaping-v-less" />
+                  <String fx:value="gaping-h-much" />
+                  <String fx:value="gaping-v-much" />
                </styleClass>
             </TilePane>
          </children>

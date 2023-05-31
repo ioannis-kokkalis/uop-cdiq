@@ -1,37 +1,55 @@
 * {
     /* ||| Color Variables */
 
-	vcolor-primary: #ab7b0d;
-    vcolor-accent: #ddc07e;
-	vcolor-text: #1c1502;
-    vcolor-background: #fbeed0;
+    vcolor-blue:            #4567FF;
+    vcolor-orange:          #F15A25;
+    vcolor-grey:            #E0E0E0;
+    vcolor-grey-less:       #EAEAEA;
+    vcolor-grey-less-less:  #ffffff;
    
     /* ||| Color Constants */
 
-    color-state-calling: #00962b;
-    color-state-available: #0082b1;
-    color-state-paused: #c35100;
-    color-state-occupied: #a30000;
+    color-state-calling:    #00962b;
+    color-state-available:  #0082b1;
+    color-state-paused:     #863800;
+    color-state-occupied:   #a30000;
 
-    color-background-idle: vcolor-background;
-    color-background-busy: vcolor-accent;
-    color-background-focus: vcolor-primary;
+    color-background-idle:      vcolor-grey-less-less;
+    color-background-busy:      vcolor-grey;
+    color-background-focus:     vcolor-blue;
+    color-background-special:   vcolor-orange;
 
-    color-text: vcolor-text;
-    color-text-alternative: vcolor-background;
+    color-text:             vcolor-orange;
+    color-text-alternative: vcolor-blue;
+    color-text-light:       vcolor-grey-less-less;
 
 	/* ||| General Setup */
 
 	-fx-font-family: "Century Gothic";
-    -fx-font-size: 20px;
     -fx-font-weight: 700;
 	-fx-text-fill: color-text;
 }
 
 /* ||| Defaults */
 
+.default-background {
+    -fx-background-image: url("../media/default-background.png");
+    -fx-background-repeat: stretch;
+}
+
+.label, .button, .text-field {
+    -fx-font-size: 22px;
+}
+
+/* ||| Buttons */
+
 .button {
-    -fx-color: color-background-focus;
+    -fx-color: color-background-special;
+    -fx-text-fill: color-text-light;
+}
+
+.button-secondary {
+    -fx-color: color-background-idle;
     -fx-text-fill: color-text;
 }
 
@@ -50,31 +68,29 @@
 
 /* ||| Coloring */
 
-.color-background-idle	{ -fx-background-color: color-background-idle; }
-.color-background-busy	{ -fx-background-color: color-background-busy; }
+.color-background-idle	    { -fx-background-color: color-background-idle; }
+.color-background-busy	    { -fx-background-color: color-background-busy; }
+.color-background-focus	    { -fx-background-color: color-background-focus; }
+.color-background-special	{ -fx-background-color: color-background-special; }
 
-.color-text { -fx-text-fill: color-text; }
+.color-text             { -fx-text-fill: color-text; }
 .color-text-alternative { -fx-text-fill: color-text-alternative; }
+.color-text-light       { -fx-text-fill: color-text-light; }
 
 /* ||| Fonts */
 
 .font-size-XL	{ -fx-font-size: 30px; }
 .font-size-L	{ -fx-font-size: 26px; }
-.font-size-M	{ -fx-font-size: 20px; }
-.font-size-S	{ -fx-font-size: 16px; }
+.font-size-M	{ -fx-font-size: 22px; }
+.font-size-S    { -fx-font-size: 16px; }
 
 /* ||| Misc */
 
 .separator *.line   {
     -fx-border-style: solid;
-    -fx-border-width: 1px;
+    -fx-border-width: 2px;
     -fx-border-radius: 100%;
-    -fx-border-color: color-background-focus;
-}
-
-.button-secondary   {
-    -fx-color: color-background-busy;
-    -fx-text-fill: color-text;
+    -fx-border-color: color-text;
 }
 
 .border {
@@ -87,10 +103,22 @@
 .color-background-notselected {-fx-background-color: #FF0000;}
 .color-background-selected {-fx-background-color: #00cc00;}
 
-.color-background-available {-fx-background-color: #0082b1;}
-.color-background-calling {-fx-background-color: #00962b;}
-.color-background-paused-frozen {-fx-background-color:#c35100;}
-.color-background-occupied {-fx-background-color:#a30000;}
+.color-background-available {-fx-background-color: color-state-available;}
+.color-background-calling {-fx-background-color: color-state-calling;}
+.color-background-paused-frozen {-fx-background-color:color-state-paused;}
+.color-background-occupied {-fx-background-color:color-state-occupied;}
 
-.l-color{-fx-text-fill: white;}/*change name*/
- 
+.radius-full {
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+}
+
+.radius-left-side {
+    -fx-border-radius: 10 0 0 10;
+    -fx-background-radius: 10 0 0 10;
+}
+
+.radius-right-side {
+    -fx-border-radius: 0 10 10 0;
+    -fx-background-radius: 0 10 10 0;
+}

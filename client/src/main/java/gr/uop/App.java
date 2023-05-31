@@ -52,7 +52,16 @@ public class App extends Application {
         App.stage = stage;
         App.scene = new Scene(new Pane()); // init scene with dummy root
         stage.setScene(scene);
-        
+
+        try {
+            // BUG sometimes won't load and will return null
+            scene.getStylesheets().add(App.class.getResource("style/style.css").toExternalForm());
+        }
+        catch(Exception e) {
+            App.consoleLogError("Stylesheet failed to load for the scene.");
+            System.exit(0);
+        };
+
         prepareEyeCandy();
         prepareFullscreenToggle();
         
@@ -97,7 +106,7 @@ public class App extends Application {
 
     private static void prepareEyeCandy() {
         stage.setTitle("Career Day");
-        stage.getIcons().add(new Image(App.class.getResourceAsStream("media/logo.png")));
+        stage.getIcons().add(new Image(App.class.getResourceAsStream("media/career-day-2023-fav.png")));
     }
 
     private static void prepareFullscreenToggle() {

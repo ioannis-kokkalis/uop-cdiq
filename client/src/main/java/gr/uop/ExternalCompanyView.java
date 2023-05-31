@@ -1,18 +1,11 @@
 package gr.uop;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.LinkedList;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import gr.uop.Network.Packet;
-import javafx.animation.AnimationTimer;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.application.Platform;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -36,35 +29,54 @@ public class ExternalCompanyView extends VBox{
     Timeline timer;
 
     public ExternalCompanyView(String logoUrl , String companyName){
-        logoContainer = new ImageView(new Image( App.class.getResourceAsStream(logoUrl)));
-        logoContainer.setFitWidth(153);
-        logoContainer.setFitHeight(102);
-
+        var width = 165;
+        logoContainer = new ImageView(new Image(App.class.getResourceAsStream(logoUrl)));
+        logoContainer.setFitWidth(width);
+        logoContainer.setFitHeight(width*0.667);
+        
+        infoContainer.getStyleClass().add(0, "color-background-available");
         setAvailiable();
-        callNumber.getStyleClass().add("l-color");
-        remainTime.getStyleClass().add("l-color");
-    
+        callNumber.getStyleClass().add("color-text-light");
+        callNumber.getStyleClass().add("font-size-L");
+        remainTime.getStyleClass().add("color-text-light");
+        remainTime.getStyleClass().add("font-size-M");
+        
         infoContainer.getChildren().addAll(callNumber,remainTime);
+        infoContainer.setPrefWidth(width*1.5);
         infoContainer.setAlignment(Pos.CENTER);
-        infoContainer.setPadding(new Insets(0, 10,0,10));
-
+        infoContainer.getStyleClass().add("padding-less");
+        infoContainer.getStyleClass().add("radius-right-side");
+        
         logoInfoContainer.getChildren().addAll(logoContainer,infoContainer);
         HBox.setHgrow(infoContainer, Priority.ALWAYS);
-
+        
         name.setText(companyName);
+        name.getStyleClass().add("color-background-idle");
+        name.getStyleClass().add("font-size-M");
+        name.getStyleClass().add("padding-less");
+        name.getStyleClass().add("radius-left-side");
+        name.setMaxWidth(Double.MAX_VALUE);
+        name.setAlignment(Pos.CENTER_LEFT);
         
-      
         getChildren().addAll(logoInfoContainer,name);
-        setAlignment(Pos.CENTER);
-        
-        getStyleClass().add("gaping-h-much");
-        getStyleClass().add("border");
+        getStyleClass().add("color-background-busy");
+        getStyleClass().add("padding-less");
+        getStyleClass().add("spacing-less");
+        getStyleClass().add("radius-full");
     }
 
     public ExternalCompanyView(String logoUrl , String companyName,String companyid, String tableId){
         this(logoUrl,companyName);
+        getChildren().remove(name);
+
         id = companyid;
-        Label table = new Label(tableId);
+        Label table = new Label("Table " + tableId);
+        table.getStyleClass().add("color-background-idle");
+        table.getStyleClass().add("font-size-M");
+        table.getStyleClass().add("padding-less");
+        table.getStyleClass().add("radius-left-side");
+        table.setMaxWidth(Double.MAX_VALUE);
+        table.setAlignment(Pos.CENTER_LEFT);
         getChildren().add(0, table);
 
         logoContainer.setOnMouseClicked(e -> {
@@ -115,18 +127,16 @@ public class ExternalCompanyView extends VBox{
     }
 
     public void setAvailiable(){
-        System.out.println(timer);
         if(timer!=null){
             timer.stop();
         }
 
         state = "available";
-        if(infoContainer.getStyleClass().size()>0)
-            infoContainer.getStyleClass().remove(0);
-        infoContainer.getStyleClass().add("color-background-available");
+        infoContainer.getStyleClass().remove(0);
+        infoContainer.getStyleClass().add(0, "color-background-available");
         remainTime.setText("");
         remainTime.setManaged(false);
-        callNumber.setText("Availiable");
+        callNumber.setText("Available");
     }
 
     public void setCalling(String userid,int time){
@@ -136,7 +146,7 @@ public class ExternalCompanyView extends VBox{
         state = "calling";
         userId = userid;
         infoContainer.getStyleClass().remove(0);
-        infoContainer.getStyleClass().add("color-background-calling");
+        infoContainer.getStyleClass().add(0, "color-background-calling");
         callNumber.setText("Calling: "+userid);
         remainTime.setManaged(true);
         
@@ -168,7 +178,7 @@ public class ExternalCompanyView extends VBox{
         if(timer!=null)
             timer.stop();
         infoContainer.getStyleClass().remove(0);
-        infoContainer.getStyleClass().add("color-background-paused-frozen");
+        infoContainer.getStyleClass().add(0, "color-background-paused-frozen");
         callNumber.setText("Paused");
         remainTime.setManaged(false);
         remainTime.setText("");
@@ -180,7 +190,7 @@ public class ExternalCompanyView extends VBox{
         if(timer!=null)
             timer.stop();
         infoContainer.getStyleClass().remove(0);
-        infoContainer.getStyleClass().add("color-background-paused-frozen");
+        infoContainer.getStyleClass().add(0, "color-background-paused-frozen");
         callNumber.setText("Frozen: "+userid);
         remainTime.setManaged(false);
         remainTime.setText("");
@@ -192,7 +202,7 @@ public class ExternalCompanyView extends VBox{
         if(timer!=null)
             timer.stop();
         infoContainer.getStyleClass().remove(0);
-        infoContainer.getStyleClass().add("color-background-occupied");
+        infoContainer.getStyleClass().add(0, "color-background-occupied");
         callNumber.setText("Ocuppied: "+userid);
         remainTime.setManaged(false);
         remainTime.setText("");
