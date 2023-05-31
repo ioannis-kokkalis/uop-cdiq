@@ -1,6 +1,13 @@
 package gr.uop.model;
 
 import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -28,6 +35,10 @@ public class Model {
             this.users = new LinkedHashMap<>();
         }
 
+        public Collection<User> getAll() {
+            return users.values();
+        }
+
         public User attemptGetUser(int id, String name, String secret) {
             User user = users.get(id);
 
@@ -37,14 +48,26 @@ public class Model {
             // TODO needs improvement
             // BUG relative weak searching, may cause issues on details
             for (User useri : this.users.values()) {
-                if( name.toLowerCase().equals(useri.getName().toLowerCase()) ||
-                        secret.equals(useri.getSecret()) ) {
+                if( secret.equals(useri.getSecret()) ) {
                     user = useri;
                     break;
                 }
             }
 
-            return user;
+            if(user != null)
+                return user;
+
+            for (User useri : this.users.values()) {
+                if( name.toLowerCase().equals(useri.getName().toLowerCase()) ) {
+                    user = useri;
+                    break;
+                }
+            }
+
+            if(user != null)
+                return user;
+
+            return null;
         }
 
         public void add(User user) {
@@ -335,6 +358,7 @@ public class Model {
             this.companiesManager.getAll().forEach(c -> {
                 c.update(this);
             });
+            this.backupJSON();
             App.network.updateSubscribers(Subscription.PUBLIC_MONITOR, Subscription.MANAGER);
         }
     }
@@ -469,7 +493,57 @@ public class Model {
     }
 
     private void backupJSON() {
-        // DOING save a JSON human readable backup file
+        var json = new JSONObject();
+        var usersArray = new JSONArray();
+        var companiesArray= new JSONArray();
+
+        usersManager.getAll().forEach(user -> {
+            var mappedUser = new HashMap<>();
+            
+            mappedUser.put("id", "u" + user.getID());
+            mappedUser.put("name", user.getName());
+            mappedUser.put("secret", user.getSecret());
+            mappedUser.put("status", user.isWhat().toString());
+            
+            usersArray.add(new JSONObject(mappedUser));
+        });
+
+        companiesManager.getAll().forEach(company -> {
+            var mappedCompany = new JSONObject();
+
+            mappedCompany.put("id", "c"+ company.getID());
+            mappedCompany.put("name", company.getName());
+            mappedCompany.put("table", "t" + company.getTableNumber());
+            mappedCompany.put("state", company.getState().toString());
+
+            var stateUser = company.getStateUser();
+            mappedCompany.put("state-user", "u" + (stateUser != null ? stateUser.getID() : ""));
+
+            var arrayRegistered = new JSONArray();
+            company.getUnmodifiableQueue().forEach(uINc -> {
+                arrayRegistered.add("u" + uINc.getID());
+            });
+            mappedCompany.put("registered", arrayRegistered);
+
+            companiesArray.add(mappedCompany);
+        });
+
+        json.put("time", DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalDateTime.now()));
+        json.put("users", usersArray);
+        json.put("companies", companiesArray);
+
+        try {
+            Path backupPath = Path.of("backup.json");
+            Path oldBackupPath = Path.of("backup-old.json");
+
+            if (Files.exists(backupPath)) {
+                Files.move(backupPath, oldBackupPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            FileWriter fileWriter = new FileWriter(backupPath.toFile());
+            fileWriter.write(json.toJSONString());
+            fileWriter.close();
+        } catch (IOException e) { }
     }
 
 }

@@ -30,6 +30,10 @@ public class User {
         this.companiesRegisteredAt = new LinkedList<>();
     }
 
+    public Status isWhat() {
+        return status;
+    }
+    
     public void isNow(Status status) {
         this.status = status;
     }
