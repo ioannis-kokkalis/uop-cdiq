@@ -157,6 +157,7 @@ public class App extends Application {
             ButtonType arrived = new ButtonType("Arrived");
             ButtonType pause = new ButtonType("Pause");
             ButtonType discard = new ButtonType("Discard");
+            ButtonType frozen = new ButtonType("Frozen");
             
             ButtonType close = ButtonType.CLOSE;
 
@@ -165,7 +166,7 @@ public class App extends Application {
 
             dialog.getDialogPane().setContent(choiceContainer);
 
-            dialog.getDialogPane().getButtonTypes().addAll(arrived,pause,discard,close);
+            dialog.getDialogPane().getButtonTypes().addAll(arrived,pause,discard,frozen,close);
 
             dialog.setResultConverter((button) -> {
                 System.out.println(button);
@@ -177,6 +178,9 @@ public class App extends Application {
                 }
                 else if(button == discard){
                     return "discard";
+                }
+                else if(button == frozen){
+                    return "calling-timeout";
                 }
                 else {
                     return null;
