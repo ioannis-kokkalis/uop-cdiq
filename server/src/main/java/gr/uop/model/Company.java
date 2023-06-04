@@ -72,6 +72,7 @@ public class Company {
                     break;
 
                 var validUpdateToTriggerCallingTimeout = update;
+                // BUG // TODO change it to stop instead of being ignored when an update on this company occurs, merge handle and update in a way
                 var countdown = new Countdown(MAX_CALLING_SECONDS, () -> {
                     App.TASK_PROCESSOR.process(() -> {
                         if (validUpdateToTriggerCallingTimeout == update) {
