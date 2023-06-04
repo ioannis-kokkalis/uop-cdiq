@@ -320,6 +320,9 @@ public class Network {
                             } else if (companyState.equals(State.OCCUPIED)
                                     && managerAction.equals(ManagerAction.COMPLETED_PAUSE)) {
                                 action = Action.MANAGER_OCCUPIED_COMPLETEDPAUSE;
+                            } else if (companyState.equals(State.CALLING)
+                                    && managerAction.equals(ManagerAction.TIMEOUT)) {
+                                action = Action.MANAGER_CALLING_CALLINGTIMEOUT;
                             }
 
                             canDoAction = action != null;

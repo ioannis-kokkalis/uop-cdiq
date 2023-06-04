@@ -161,7 +161,8 @@ public class Model {
         COMPLETED("completed"),
         COMPLETED_PAUSE("completed-pause"),
         PAUSE("pause"),
-        RESUME("resume");
+        RESUME("resume"),
+        TIMEOUT("calling-timeout");
 
         public final String value;
 
@@ -187,7 +188,8 @@ public class Model {
         MANAGER_CALLINGTIMEOUT_ARRIVED,
         MANAGER_CALLINGTIMEOUT_DISCARD,
         MANAGER_OCCUPIED_COMPLETED,
-        MANAGER_OCCUPIED_COMPLETEDPAUSE
+        MANAGER_OCCUPIED_COMPLETEDPAUSE,
+        MANAGER_CALLING_CALLINGTIMEOUT
     }
 
     /**
@@ -218,6 +220,7 @@ public class Model {
                 break;
 
             case CALLING_TIMEDOUT:
+            case MANAGER_CALLING_CALLINGTIMEOUT:
                 didAction = companyIDs.length == 1 && user == null;
                 if (!didAction) {
                     App.consoleLogError("Can't handle \"" + action + "\".",
