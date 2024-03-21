@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+  
+  dbms:
+    build:
+      context: ./dbms
+      dockerfile: Dockerfile
+    environment:
+      POSTGRES_USER: ${DBMS_USERNAME}
+      POSTGRES_PASSWORD: ${DBMS_PASSWORD}
+      POSTGRES_DB: ${DBMS_DATABASE}
+    volumes:
+      - ./dbms/vlpd:/var/lib/postgresql/data
+  
+  server:
+    depends_on:
+      - dbms
+    build:
+      context: ./server
+      dockerfile: Dockerfile 
+    ports:
+      - 80:80
+    environment:
+      DB_HOST: dbms
+      DB_USERNAME: ${DBMS_USERNAME}
+      DB_PASSWORD: ${DBMS_PASSWORD}
+      DB_NAME: ${DBMS_DATABASE}
+    volumes:
+      - ./server/vwh:/var/www/html/
