@@ -77,7 +77,7 @@
 		?>
 		<main>
 			<p>You have the ability to upload your resume and we will suggest what companies are more likely suited for your needs, so you can apply more precisely for interviews.</p>
-			<form action="suggestions.php" method="post">
+			<form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 				<fieldset>
 					<legend>Conitnue as</legend>
 					<label for="guest">
@@ -98,7 +98,7 @@
 		?>
 		<main>
 			<p>Upload your resume (as .pdf or .docx) and we will suggest what companies are more likely suited for your needs.</p>
-			<form action="suggestions.php" method="post" enctype="multipart/form-data">
+			<form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>" enctype="multipart/form-data">
 				<fieldset>
 					<legend>Your Resume</legend>
 					<label for="resume">
