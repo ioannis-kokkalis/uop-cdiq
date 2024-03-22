@@ -1,0 +1,92 @@
+
+/* Notes: 
+mobile first with small fixes for larger screens
+*/
+
+@font-face { font-family: local-font-family; src: url('/resources/fonts/comfortaa/Comfortaa-Regular.ttf'); }
+
+/* TODO check with flexbox how to push footer at the bottom */
+
+p {
+	margin: 0;
+}
+
+html {
+	font-family: local-font-family;
+}
+
+body {
+	margin: 0;
+	padding: 1rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+header, footer {
+	margin: 0;
+	flex-shrink: 0;
+}
+
+main {
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 12px 0px;
+}
+
+main > * {
+	margin-top: .75rem;
+}
+
+main > *:first-child {
+	margin-top: 0;
+	padding-top: 0;
+}
+
+main > *:last-child {
+	margin-bottom: 0;
+	padding-bottom: 0;
+}
+
+nav {
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+}
+
+nav a {
+	margin: .5rem;
+}
+
+hr {
+	width: 100%;
+	margin: .75rem 0;
+}
+
+form {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+input:not(:last-child) {
+	margin-bottom: .75rem;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	line-height: 2.5rem;
+}
+
+input[type="submit"], input::file-selector-button {
+	padding: .4rem .9rem;
+}
+
+@media screen and (min-width: 501px) {
+	main {
+		max-width: 650px;
+	}
+}
