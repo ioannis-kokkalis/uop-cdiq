@@ -83,7 +83,7 @@
 	<title>UoP CDIQ 2024</title>
 </head>
 <body>
-	<?php include $_SERVER['DOCUMENT_ROOT'] . '/components/navigation.php'; ?>
+	<?php include $_SERVER['DOCUMENT_ROOT'] . '/.private/components/navigation.php'; ?>
 
 	<hr>
 
@@ -157,6 +157,6 @@
 	<hr>
 	
 	<div style="flex-grow: 1"></div>
-	<?php include $_SERVER['DOCUMENT_ROOT'] . '/components/footer.php'; ?>
+	<?php include $_SERVER['DOCUMENT_ROOT'] . '/.private/components/footer.php'; ?>
 </body>
 </html>
