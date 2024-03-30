@@ -1,8 +1,12 @@
 <?php
 
-$config = [
-	"dbms_host" => getenv('DB_HOST'),
-	"dbms_db_name" => getenv('DB_NAME'),
-	"dbms_username" => getenv('DB_USERNAME'),
-	"dbms_password" => getenv('DB_PASSWORD'),
+// keys should change rarely if not never, values can be changed freely
+
+return [
+	"dbms" => [
+		"host" => getenv('DB_HOST'),
+		"dbname" => getenv('DB_NAME'),
+		"user" => getenv('DB_USERNAME'),
+		"password" => getenv('DB_PASSWORD'),
+	],
 ];
