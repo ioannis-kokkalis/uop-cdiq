@@ -7,6 +7,7 @@ from TextExtractor import TextExtractor
 from TextPreprocessor import TextPreprocessor
 from Translator import Translator
 from langdetect import detect
+from celery import Celery
 
 app = FastAPI()
 
@@ -27,20 +28,12 @@ logging.info("Done!")
 translator = Translator()
 candidate_labels = ['finance', 'healthcare', 'information & technology', 'business management']
 
+# Initialize Celery
+celery = Celery('api', broker='redis://redis:6379/0')
 
-@app.post("/classify_resume")
-async def classify_resume(file: UploadFile = File(...)):
+@celery.task
+def process_resume(file_path):
     try:
-        # Save the file to a temporary location
-        file_path = f"/tmp/{file.filename}"
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        # Ensure file is saved properly
-        if not os.path.exists(file_path):
-            raise HTTPException(status_code=500, detail="Failed to save the uploaded file")
-        logging.info(f"Successfully saved file to {file_path}")
-
         # Extract text from the resume
         text_extractor = TextExtractor(file_path)
         text = text_extractor.extract_text()
@@ -53,8 +46,6 @@ async def classify_resume(file: UploadFile = File(...)):
         if detect(text) == 'el':
             try:
                 # Translate the text to english
-
-                # split in 2x512 tokens max, per the max input of the summarizer (1024)
                 if len(translated_text) > 1024:
                     translated_text = ' '.join(translated_text[:1023])
                     translated_text = translator.translate_large_text_to_english(translated_text)
@@ -75,13 +66,9 @@ async def classify_resume(file: UploadFile = File(...)):
             raise HTTPException(status_code=500, detail="Failed to preprocess the text")
         logging.info(f"Preprocessed text: {preprocessed_text}")
 
-
         # Summarize the text
-        # summary = summarizer(preprocessed_text, max_length=150, min_length=50, length_penalty=2.0, num_beams=4, early_stopping=True)
-        # summary = summarizer(preprocessed_text, max_length=150, min_length=50, length_penalty=2.0, num_beams=4, early_stopping=False)
         summary = summarizer(preprocessed_text, max_length=100, min_length=30)
         logging.info(f"Summary from the preprocessed text: {summary}")
-
 
         if not summary:
             raise HTTPException(status_code=500, detail="Failed to summarize the text")
@@ -104,3 +91,18 @@ async def classify_resume(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
+@app.post("/classify_resume")
+async def classify_resume(file: UploadFile = File(...)):
+    # Save the file to a temporary location
+    file_path = f"/tmp/{file.filename}"
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    # Ensure file is saved properly
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=500, detail="Failed to save the uploaded file")
+    logging.info(f"Successfully saved file to {file_path}")
+
+    # Process resume asynchronously
+    process_resume.delay(file_path)
+    return {"message": "Processing started. Check later for results."}

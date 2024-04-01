@@ -1,5 +1,4 @@
 services:
-  
   dbms:
     build:
       context: ./dbms
@@ -9,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${DBMS_PASSWORD}
     volumes:
       - ./dbms/vlpd:/var/lib/postgresql/data
-  
+
   server:
     depends_on:
       - dbms
@@ -32,3 +31,24 @@ services:
       SERVER_SSL_PKEY_FILE: ${SERVER_SSL_PKEY_FILE}
     volumes:
       - ./server/vwh:/var/www/html/
+
+  redis:
+    image: redis:alpine
+
+  api:
+    depends_on:
+      - redis
+    build:
+      context: ./suggestions-api
+      dockerfile: DockerfileAPI
+    ports:
+      - 8000:8000
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+
+  worker:
+    depends_on:
+      - redis
+    build:
+      context: ./suggestions-api
+      dockerfile: DockerfileWorker
