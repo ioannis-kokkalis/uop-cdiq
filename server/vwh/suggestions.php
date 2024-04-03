@@ -41,33 +41,33 @@
 		if($_FILES['resume']['error'] == UPLOAD_ERR_NO_FILE) {
 			$suggestionResult = "No file uploaded!";
 		}
-		//else if($_FILES['resume']['error'] == UPLOAD_ERR_OK) { // TODO consider size maybe?
-		// 	$fileData = curl_file_create($_FILES['resume']['tmp_name'], $_FILES['resume']['type'], $_FILES['resume']['name']);
+		else if($_FILES['resume']['error'] == UPLOAD_ERR_OK) {
+			$fileData = curl_file_create($_FILES['resume']['tmp_name'], $_FILES['resume']['type'], $_FILES['resume']['name']);
 
-		// 	$curl = curl_init();
-	
-		// 	curl_setopt_array($curl, [
-		// 		CURLOPT_PORT => "12345",
-		// 		CURLOPT_URL => "http://192.168.48.222/classify_resume", // TODO use the container name when added in compose.yml
-		// 		CURLOPT_RETURNTRANSFER => true,
-		// 		CURLOPT_ENCODING => "",
-		// 		CURLOPT_MAXREDIRS => 10,
-		// 		CURLOPT_TIMEOUT => 0,
-		// 		CURLOPT_FOLLOWLOCATION => true,
-		// 		CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-		// 		CURLOPT_CUSTOMREQUEST => "POST",
-		// 		CURLOPT_POSTFIELDS => ["file" => $fileData],
-		// 		CURLOPT_HTTPHEADER => [
-		// 			"accept: application/json",
-		// 			"Content-Type: multipart/form-data",
-		// 		],
-		// 	]);
-			
-		// 	$response = curl_exec($curl);
-		// 	curl_close($curl);
-		
-		// 	$suggestionResult = $response; // TODO return some structure with the result or error not being able to open the file
-		// }
+			$curl = curl_init();
+
+			curl_setopt_array($curl, [
+				CURLOPT_PORT => 8000,
+				CURLOPT_URL => "http://api:8000/classify_resume",
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_ENCODING => "",
+				CURLOPT_MAXREDIRS => 10,
+				CURLOPT_TIMEOUT => 0,
+				CURLOPT_FOLLOWLOCATION => true,
+				CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+				CURLOPT_CUSTOMREQUEST => "POST",
+				CURLOPT_POSTFIELDS => ["file" => $fileData],
+				CURLOPT_HTTPHEADER => [
+					"accept: application/json",
+					"Content-Type: multipart/form-data",
+				],
+			]);
+
+			$response = curl_exec($curl);
+			curl_close($curl);
+
+			$suggestionResult = $response; // TODO return some structure with the result or error not being able to open the file
+		}
 	}
 	else {
 		$showInitial = true;
