@@ -1,9 +1,0 @@
-FROM python3.8:slim
-
-WORKDIR /app
-
-COPY worker/requirements.txt
-
-RUN pip install --no-cache-dir -r requirements.txt
-
-CMD ["celery", "worker", "--app=api", "--loglevel=info", "--concurrency=1"]
