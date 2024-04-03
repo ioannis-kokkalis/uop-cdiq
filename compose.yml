@@ -32,23 +32,12 @@ services:
     volumes:
       - ./server/vwh:/var/www/html/
 
-  redis:
-    image: redis:alpine
-
   api:
-    depends_on:
-      - redis
     build:
       context: ./suggestions-api
       dockerfile: DockerfileAPI
     ports:
       - 8000:8000
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-
-  worker:
-    depends_on:
-      - redis
-    build:
-      context: ./suggestions-api
-      dockerfile: DockerfileWorker
+    volumes:
+      - ./suggestions-api/src:/app
+    command: uvicorn api:app --host 0.0.0.0 --port 8000 --workers 1

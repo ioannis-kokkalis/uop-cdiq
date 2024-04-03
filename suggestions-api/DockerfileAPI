@@ -3,14 +3,11 @@ FROM python:3.11
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the dependencies file to the working directory
 COPY requirements.txt .
-# Install any dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY more-reqs.txt .
 RUN pip install --no-cache-dir -r more-reqs.txt
-
 
 # preload the models
 RUN python -c "from transformers import pipeline; classifier = pipeline('zero-shot-classification', model='facebook/bart-large-mnli')"
@@ -20,7 +17,4 @@ RUN python -c "from transformers import pipeline; translator = pipeline('transla
 COPY even-more-reqs.txt .
 RUN pip install --no-cache-dir -r even-more-reqs.txt
 
-COPY ./src .
-
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 

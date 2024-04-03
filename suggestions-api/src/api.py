@@ -1,15 +1,19 @@
 import shutil
 from transformers import pipeline
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 import logging
 import os
 from TextExtractor import TextExtractor
 from TextPreprocessor import TextPreprocessor
 from Translator import Translator
 from langdetect import detect
-from celery import Celery
+from queue import Queue
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
+
+task_queue = Queue()
+is_processing = False
 
 # Set up extensive logging
 logging.basicConfig(
@@ -28,10 +32,9 @@ logging.info("Done!")
 translator = Translator()
 candidate_labels = ['finance', 'healthcare', 'information & technology', 'business management']
 
-# Initialize Celery
-celery = Celery('api', broker='redis://redis:6379/0')
 
-@celery.task
+
+
 def process_resume(file_path):
     try:
         # Extract text from the resume
@@ -91,8 +94,30 @@ def process_resume(file_path):
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
+def process_queue():
+    while not task_queue.empty():
+        # Log contents of the queue before processing
+        logging.info("Queue contents before processing: %s", list(task_queue.queue))
+
+        file_path = task_queue.get()
+        result = process_resume(file_path)
+        task_queue.task_done()
+        # Log contents of the queue after processing
+        logging.info("Queue contents after processing: %s", list(task_queue.queue))
+
+        # save the result to a file 
+        user_id = os.path.basename(file_path).split(".")[0]
+        result_file_path = f"/tmp/{user_id}.result"
+        with open(result_file_path, "w") as f:
+            f.write(str(result))
+
+        # Delete the file
+        os.remove(file_path)
+
+
+
 @app.post("/classify_resume")
-async def classify_resume(file: UploadFile = File(...)):
+async def classify_resume(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     # Save the file to a temporary location
     file_path = f"/tmp/{file.filename}"
     with open(file_path, "wb") as buffer:
@@ -103,6 +128,39 @@ async def classify_resume(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail="Failed to save the uploaded file")
     logging.info(f"Successfully saved file to {file_path}")
 
-    # Process resume asynchronously
-    process_resume.delay(file_path)
-    return {"message": "Processing started. Check later for results."}
+    # Add the file to the queue
+    task_queue.put(file_path)
+    background_tasks.add_task(process_queue)
+
+    return {"message": "Processing the resume. Check later for results."}
+    
+@app.get("/queue_position/{user_id}")
+async def queue_position(user_id: str):
+    # Log contents of the queue before querying
+    logging.info("Queue contents before querying: %s", list(task_queue.queue))
+
+    if f"{user_id}.pdf" not in [os.path.basename(item) for item in list(task_queue.queue)]:
+        position = None
+    else:
+        position = "Processed"
+
+
+    # Log the queue position
+    logging.info("Queue position for user %s: %s", user_id, position)
+
+    return JSONResponse(content={"queue_position" : position})
+
+
+@app.get("/result/{user_id}")
+async def results(user_id: str):
+    user_id = os.path.basename(user_id).split(".")[0]
+    result_file_path = f"/tmp/{user_id}.result"
+    if os.path.exists(result_file_path):
+        with open(result_file_path, "r") as f:
+            result = f.read()
+        os.remove(result_file_path)
+        return result
+    else:
+        raise HTTPException(status_code=404, detail="Result not found")
+
+
