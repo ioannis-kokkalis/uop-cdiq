@@ -18,14 +18,47 @@ if(isset($_POST['submit'])) {
 	if($mode == MODE_GUEST) {
 		// skip
 	}
-	else if($mode == MODE_LOGIN) {
-		// $return_url = 'http://' . "placeholderhost:port" . $_SERVER['REQUEST_URI'];
-		// $sso_url = 'https://sso.uop.gr/login?service=' . urlencode($return_url);
-		// header('Location: ' . $sso_url);
-		// exit();
-		// /* TODO look it up with Costas?
-		// Application Not Authorized to Use CAS. The application you attempted to authenticate to is not authorized to use CAS. This usually indicates that the application is not registered with CAS, or its authorization policy defined in its registration record prevents it from leveraging CAS functionality, or it's malformed and unrecognized by CAS. Contact your CAS administrator to learn how you might register and integrate your application with CAS.
-		// */
+	// else if (returning from SSO) {
+	// 	$showFileUploadForm = true;
+	// 	// TODO
+	// 	$mode = MODE_LOGIN;
+	// 	$email = sso.email;
+	// }
+	else if(isset($_FILES['resume'])) {
+		$showSuggestionsResult = true;
+		
+		$suggestionResult = "This feature is not yet implemented.";
+
+		if($_FILES['resume']['error'] == UPLOAD_ERR_NO_FILE) {
+			$suggestionResult = "No file uploaded!";
+		}
+		else if($_FILES['resume']['error'] == UPLOAD_ERR_OK) {
+			$fileData = curl_file_create($_FILES['resume']['tmp_name'], $_FILES['resume']['type'], $_FILES['resume']['name']);
+
+			$curl = curl_init();
+
+			curl_setopt_array($curl, [
+				CURLOPT_PORT => 8000,
+				CURLOPT_URL => "http://api:8000/classify_resume",
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_ENCODING => "",
+				CURLOPT_MAXREDIRS => 10,
+				CURLOPT_TIMEOUT => 0,
+				CURLOPT_FOLLOWLOCATION => true,
+				CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+				CURLOPT_CUSTOMREQUEST => "POST",
+				CURLOPT_POSTFIELDS => ["file" => $fileData],
+				CURLOPT_HTTPHEADER => [
+					"accept: application/json",
+					"Content-Type: multipart/form-data",
+				],
+			]);
+
+			$response = curl_exec($curl);
+			curl_close($curl);
+
+			$suggestionResult = $response; // TODO return some structure with the result or error not being able to open the file
+		}
 	}
 	else {
 		header('Location: /suggestions.php');
