@@ -16,9 +16,9 @@ $a->body_main = function() use ($operator_challenge_failed) { ?>
 	<form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 		<fieldset>
 			<legend>Password</legend>
-			<label for="password">
-				<input type="password" name="password" id="password"><br>
-			</label>
+
+			<input type="password" name="password" id="password">
+
 			<input type="submit" value="Submit">
 		</fieldset>
 	</form>

@@ -79,15 +79,38 @@ main > *:last-child {
 form {
 	display: flex;
 	flex-direction: column;
+	gap: .75rem;
+
+	width: 100%;
 }
 
-form input:not(:last-child) {
-	margin-bottom: .75rem;
+form fieldset {
+	display: flex;
+	flex-direction: column;
+	
+	gap: 1rem;
+	padding: 1.25rem;
+	padding-top: .75rem;
 }
 
-form input[type="submit"],
-form input::file-selector-button {
-	padding: .4rem .9rem;
+form input,
+form button,
+form select,
+form input::file-selector-button
+{
+	padding: .4rem .8rem;
+}
+
+form input[type="file"] {
+	padding: 0;
+}
+
+.horizontal_buttons {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-end;
+
+	gap: .75rem;
 }
 
 hr {

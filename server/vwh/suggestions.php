@@ -103,7 +103,6 @@ $a->body_main = function() use (
 				<label for="login">
 					<input type="radio" name="mode" id="login" value="<?php echo MODE_LOGIN ?>" required>UoP Student via Login
 				</label>
-				<hr>
 				<input type="submit" name="submit" value="Proceed">
 			</fieldset>
 		</form>
@@ -119,7 +118,6 @@ $a->body_main = function() use (
 				<label for="resume">
 					<input type="file" name="resume" accept=".pdf, .docx" required>
 				</label>
-				<hr>
 				<input type="submit" name="file_upload" value="Upload">
 			</fieldset>
 		</form>

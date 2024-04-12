@@ -3,12 +3,66 @@
 // TODO maybe add error codes on the inerfaces for better responses and return values
 // public const ERROR_XYZ = 1;
 
+enum Update {
+	case SECRETARY_ADD_INTERVIEWEE;
+	case SECRETARY_DELETE_INTERVIEWEE;
+	case SECRETARY_ENQUEUE;
+	case SECRETARY_ENQUEUED_TO_DEQUEUED;
+	case SECRETARY_ACTIVE_TO_INACTIVE_INTERVIEWEE;
+	case SECRETARY_INACTIVE_TO_ACTIVE_INTERVIEWEE;
+	case SECRETARY_ADD_INTERVIEWER;
+	case SECRETARY_REMOVE_INTERVIEWER;
+	
+	case SYSTEM_ENQUEUED_TO_CALLING; // checks and updates if needed // maybe do this after any update
+	case SYSTEM_CALLING_TO_DESICION; // checks and updates if needed
+
+	case GATEKEEPER_ACTIVE_TO_INACTIVE_INTERVIEWER; // MANAGER_AVAILABLE_PAUSE & MANAGER_CALLING_PAUSE
+	case GATEKEEPER_INACTIVE_TO_ACTIVE_INTERVIEWER;
+	case GATEKEEPER_CALLING_TO_HAPPENING;
+	case GATEKEEPER_CALLING_TO_DEQUEUED;
+	case GATEKEEPER_DESICION_TO_HAPPENING;
+	case GATEKEEPER_DESICION_TO_DEQUEUED;
+	case GATEKEEPER_HAPPENING_TO_COMPLETED; // + GATEKEEPER_HAPPENING_TO_COMPLETED_AND_ACTIVE_TO_INACTIVE_INTERVIEWER; // unecessary since you can active/inactive before completion if you want?
+}
+
+class UpdateArguments {
+	public readonly int | null $iwee_id;
+	public readonly string | null $iwee_email;
+	public readonly array | null $iwer_id;
+	public readonly int | null $iw_id;
+
+	public function __construct(
+		int | null $iwee_id = null,
+		string | null $iwee_email = null,
+		array | null $iwer_id = null,
+		int | null $iw_id = null
+	) { 
+		if($iwer_id !== null) {
+			foreach ($iwer_id as $id) {
+				if(is_int($id) === false) {
+					throw new ErrorException("Array \$iwer_id bust contain only integers.");
+				}
+			}
+		}
+		
+		$this->iwee_id = $iwee_id;
+		$this->iwee_email = $iwee_email;
+		$this->iwer_id = $iwer_id;
+		$this->iw_id = $iw_id;
+		
+		// TODO sanitization?
+	}
+}
+
 interface Database {
 	/**
 	 * @return string of the operator type when the password matches
 	 * @return false when the password has no match
 	 */
 	public function operator_mapping(string $password) : string|false;
+	public function handle_update(Update $update, UpdateArguments $arguments) : bool;
+
+	public function retrieve(string ...$from_table) : array;
 }
 
 interface DatabaseAdmin {
@@ -20,6 +74,8 @@ interface DatabaseAdmin {
 }
 
 class Postgres implements Database, DatabaseAdmin {
+	public static string $UPDATE_CHANNEL = "update_channel";
+
 	private array $conf;
 	private ?PDO $pdo;
 	
@@ -79,6 +135,87 @@ class Postgres implements Database, DatabaseAdmin {
 		});
 	}
 
+	public function handle_update(Update $update, UpdateArguments $arguments) : bool {
+		$handled = $this->connect(true, function() use ($update, $arguments) {
+			$this->pdo->beginTransaction();
+
+			// TODO no need to do it for all updates, make it better (haha)
+			// TODO maybe have another to table as a locker for the time being?
+			$this->pdo->query('LOCK TABLE interview IN EXCLUSIVE MODE;');
+
+			$updated = false;
+
+			switch ($update) {
+				case Update::SECRETARY_ADD_INTERVIEWEE:
+					if ($arguments->iwee_email === null) {
+						break;
+					}
+
+					// ===
+
+					// TODO if not exists since for submission is funky?
+
+					$query = "INSERT INTO interviewee (email, active, available)
+						VALUES ('{$arguments->iwee_email}', true, true);
+					";
+
+					$this->pdo->query($query);
+
+					// ===
+					
+					$updated = true;
+					break;
+
+				case Update::SECRETARY_DELETE_INTERVIEWEE:
+					if ($arguments->iwee_id === null) {
+						break;
+					}
+
+					// ===
+
+					$query = "DELETE FROM interviewee WHERE id = {$arguments->iwee_id};";
+
+					$this->pdo->query($query);
+					
+					// TODO delete interviews related to iwee_id and handle related interviers availablility?
+
+					// ===
+
+					$updated = true;
+					break;
+				
+				default: break;
+			}
+
+			$this->pdo->commit();
+			
+			if($updated === true) {
+				$this->pdo->query("NOTIFY ".Postgres::$UPDATE_CHANNEL.";");
+			}
+
+			return $updated;
+
+		});
+
+		if($handled === true && $update !== Update::SYSTEM_ENQUEUED_TO_CALLING ) {
+			$this->handle_update(Update::SYSTEM_ENQUEUED_TO_CALLING, new UpdateArguments());
+		}
+
+		return $handled;
+	}
+
+	public function retrieve(string ...$from_table) : array {
+		return $this->connect(true, function () use ($from_table) {
+			$retrieved = [];
+
+			foreach($from_table as $table) {
+				$retrieved[$table] = $this->pdo->query("SELECT * FROM {$table};")->fetchAll(); 
+			}
+
+			return $retrieved;
+		});
+	}
+
 	// ||
 	// \/ methods of DatabaseAdmin interface
 
@@ -101,25 +238,59 @@ class Postgres implements Database, DatabaseAdmin {
 		echo "Database created.\n";
 
 		$result = $this->connect(true, function() {
-			$query = " -- initialization
+			$tables = [ // creation queries
 
-				CREATE TABLE IF NOT EXISTS operator (
+				"CREATE TABLE IF NOT EXISTS operator (
 					id SERIAL PRIMARY KEY,
+					
 					pass VARCHAR(255) NOT NULL,
 					type VARCHAR(255) NOT NULL,
 					reminder VARCHAR(255) NOT NULL
-				);
-			";
+				);",
 
-			if($this->pdo->query($query) == false) {
-				return false;
+				"CREATE TABLE IF NOT EXISTS interviewee (
+					id SERIAL PRIMARY KEY,
+
+					email VARCHAR(255) NOT NULL,
+
+					active BOOLEAN NOT NULL,
+					available BOOLEAN NOT NULL
+				);",
+
+				"CREATE TABLE IF NOT EXISTS interviewer /* or company */ (
+					id SERIAL PRIMARY KEY,
+
+					name VARCHAR(255) NOT NULL
+					-- logo_resource_url VARCHAR(255) NOT NULL,
+					-- table_number VARCHAR(255) NOT NULL,
+
+					-- active BOOLEAN NOT NULL,
+					-- available BOOLEAN NOT NULL
+				);",
+
+				"CREATE TABLE IF NOT EXISTS interview (
+					id SERIAL PRIMARY KEY,
+
+					id_interviewer INTEGER NOT NULL REFERENCES interviewer(id),
+					id_interviewee INTEGER NOT NULL REFERENCES interviewee(id),
+
+					state VARCHAR(255) NOT NULL,
+					state_timestamp TIMESTAMP NOT NULL
+				);",
+
+			];
+
+			foreach($tables as $t) {
+				if($this->pdo->query($t) === false)
+					return false;
 			}
 
 			return true;
 		});
 
 		if ($result === false) {
-			echo "Tables creation failed.\n";
+			echo "Tables creation failed. Dropping database.\n";
+			$this->drop();
 			return;
 		}
 
