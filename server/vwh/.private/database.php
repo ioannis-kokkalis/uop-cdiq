@@ -5,24 +5,24 @@
 
 enum Update {
 	case SECRETARY_ADD_INTERVIEWEE;
-	case SECRETARY_DELETE_INTERVIEWEE;
-	case SECRETARY_ENQUEUE;
-	case SECRETARY_ENQUEUED_TO_DEQUEUED;
-	case SECRETARY_ACTIVE_TO_INACTIVE_INTERVIEWEE;
-	case SECRETARY_INACTIVE_TO_ACTIVE_INTERVIEWEE;
-	case SECRETARY_ADD_INTERVIEWER;
-	case SECRETARY_REMOVE_INTERVIEWER;
+	case SECRETARY_DELETE_INTERVIEWEE; // TODO needs update after SECRETARY_ENQUEUE
+	case SECRETARY_ENQUEUE; // TODO
+	case SECRETARY_ENQUEUED_TO_DEQUEUED; // TODO
+	case SECRETARY_ACTIVE_TO_INACTIVE_INTERVIEWEE; // TODO
+	case SECRETARY_INACTIVE_TO_ACTIVE_INTERVIEWEE; // TODO
+	case SECRETARY_ADD_INTERVIEWER; // TODO
+	case SECRETARY_REMOVE_INTERVIEWER; // TODO
 	
-	case SYSTEM_ENQUEUED_TO_CALLING; // checks and updates if needed // maybe do this after any update
-	case SYSTEM_CALLING_TO_DESICION; // checks and updates if needed
+	case SYSTEM_ENQUEUED_TO_CALLING; // TODO // checks and updates if needed // maybe do this after any update
+	case SYSTEM_CALLING_TO_DESICION; // TODO // checks and updates if needed
 
-	case GATEKEEPER_ACTIVE_TO_INACTIVE_INTERVIEWER; // MANAGER_AVAILABLE_PAUSE & MANAGER_CALLING_PAUSE
-	case GATEKEEPER_INACTIVE_TO_ACTIVE_INTERVIEWER;
-	case GATEKEEPER_CALLING_TO_HAPPENING;
-	case GATEKEEPER_CALLING_TO_DEQUEUED;
-	case GATEKEEPER_DESICION_TO_HAPPENING;
-	case GATEKEEPER_DESICION_TO_DEQUEUED;
-	case GATEKEEPER_HAPPENING_TO_COMPLETED; // + GATEKEEPER_HAPPENING_TO_COMPLETED_AND_ACTIVE_TO_INACTIVE_INTERVIEWER; // unecessary since you can active/inactive before completion if you want?
+	case GATEKEEPER_ACTIVE_TO_INACTIVE_INTERVIEWER; // TODO // MANAGER_AVAILABLE_PAUSE & MANAGER_CALLING_PAUSE
+	case GATEKEEPER_INACTIVE_TO_ACTIVE_INTERVIEWER; // TODO
+	case GATEKEEPER_CALLING_TO_HAPPENING; // TODO
+	case GATEKEEPER_CALLING_TO_DEQUEUED; // TODO
+	case GATEKEEPER_DESICION_TO_HAPPENING; // TODO
+	case GATEKEEPER_DESICION_TO_DEQUEUED; // TODO
+	case GATEKEEPER_HAPPENING_TO_COMPLETED; // TODO // + GATEKEEPER_HAPPENING_TO_COMPLETED_AND_ACTIVE_TO_INACTIVE_INTERVIEWER; // unecessary since you can active/inactive before completion if you want?
 }
 
 class UpdateArguments {
@@ -145,49 +145,53 @@ class Postgres implements Database, DatabaseAdmin {
 
 			$updated = false;
 
-			switch ($update) {
-				case Update::SECRETARY_ADD_INTERVIEWEE:
-					if ($arguments->iwee_email === null) {
+			try {
+				switch ($update) {
+					case Update::SECRETARY_ADD_INTERVIEWEE:
+						if ($arguments->iwee_email === null) {
+							break;
+						}
+
+						// ===
+
+						$query = "INSERT INTO interviewee (email, active, available)
+							VALUES ('{$arguments->iwee_email}', true, true)
+							ON CONFLICT (email) DO NOTHING;
+						";
+
+						$this->pdo->query($query);
+
+						// ===
+						
+						$updated = true;
 						break;
-					}
 
-					// ===
+					case Update::SECRETARY_DELETE_INTERVIEWEE:
+						if ($arguments->iwee_id === null) {
+							break;
+						}
 
-					// TODO if not exists since for submission is funky?
+						// ===
 
-					$query = "INSERT INTO interviewee (email, active, available)
-						VALUES ('{$arguments->iwee_email}', true, true);
-					";
+						$query = "DELETE FROM interviewee WHERE id = {$arguments->iwee_id};";
 
-					$this->pdo->query($query);
+						$this->pdo->query($query);
+						
+						// TODO delete interviews related to iwee_id and handle related interviers availablility?
 
-					// ===
-					
-					$updated = true;
-					break;
+						// ===
 
-				case Update::SECRETARY_DELETE_INTERVIEWEE:
-					if ($arguments->iwee_id === null) {
+						$updated = true;
 						break;
-					}
-
-					// ===
-
-					$query = "DELETE FROM interviewee WHERE id = {$arguments->iwee_id};";
-
-					$this->pdo->query($query);
 					
-					// TODO delete interviews related to iwee_id and handle related interviers availablility?
+					default: break;
+				}
 
-					// ===
-
-					$updated = true;
-					break;
-				
-				default: break;
+				$this->pdo->commit();
 			}
-
-			$this->pdo->commit();
+			catch (Throwable $th) {
+				$this->pdo->rollBack();
+			}
 			
 			if($updated === true) {
 				$this->pdo->query("NOTIFY ".Postgres::$UPDATE_CHANNEL.";");
@@ -251,7 +255,7 @@ class Postgres implements Database, DatabaseAdmin {
 				"CREATE TABLE IF NOT EXISTS interviewee (
 					id SERIAL PRIMARY KEY,
 
-					email VARCHAR(255) NOT NULL,
+					email VARCHAR(255) UNIQUE NOT NULL,
 
 					active BOOLEAN NOT NULL,
 					available BOOLEAN NOT NULL
