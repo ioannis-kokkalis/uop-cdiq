@@ -1,5 +1,13 @@
 <?php
 
+require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
+
+$a = new AssemblerOperate('Secretary');
+
+$a->operator_ensure(Operator::Secretary);
+
+// ---
+
 require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/database.php';
 
 function form_submission_preprocess() : array | false {
@@ -44,12 +52,6 @@ if(($parameters = form_submission_preprocess()) !== false) {
 }
 
 // ---
-
-require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
-
-$a = new AssemblerOperate('Secretary');
-
-$a->operator_ensure(Operator::Secretary);
 
 $a->body_main = function() {
 
