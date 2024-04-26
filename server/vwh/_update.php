@@ -1,86 +1,95 @@
 <?php
 
-// this script is an event source for the JavaScript class EventSource to utilize
+define("TIMEZONE", "UTC");
+date_default_timezone_set(TIMEZONE);
 
-// works with PostgreSQL because of LISTEN and NOTIFY thus not using the database.php for the time being
-// TODO probably accept PostgreSQL as the database of the choice for the project since otherwise it breaks 
+header("Content-Type: text/plain", true);
 
-enum Event : string {
-	case UPDATE	= 'update';
-	case ERROR	= 'uerror';
+if (isset($_GET) === false) {
+	echo 'use at least GET method';
+	exit(0);
 }
+
+# ---
 
 enum Parameter : string {
-	case FOR = 'for';
-}
-
-// ---
-
-ob_implicit_flush(false);
-
-function produce(Event $event, string $data) : void {
-	echo "event:{$event->value}\ndata:{$data}\n\n";
-	flush();
-}
-
-// ---
-
-if (isset($_GET) === false || isset($_GET[Parameter::FOR->value]) === false) {
-	produce(Event::ERROR, "use GET method and parameter '".Parameter::FOR->value."'\n");
-	exit(0);
+	case AM_I_UP_TO_DATE = 'am_i_up_to_date';
+	case GET_ME_UP_TO_DATE = 'get_me_up_to_date';
+	case WANT_TO_MAKE_CHANGES = 'want_to_make_changes';
 }
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/database.php';
 
 $db = database();
 
-$request_data = [ // each must return an array, TODO maybe rework it to classes/interface or enum?
-	'secretary' => function () use ($db) : array  {
-		// TODO add interviewers too
-		return $db->retrieve("interviewee");
-	}
+$parameters = [
+	Parameter::AM_I_UP_TO_DATE->value => [
+		'handle' => function() use ($db) {
+
+			$known = intval($_GET[Parameter::AM_I_UP_TO_DATE->value]);
+
+			$uhr = $db->update_happened_recent();
+			$recent = intval($uhr->format('U') . substr($uhr->format('u'), 0, 3));
+			
+			echo $recent > $known ? 0 : 1;
+		},
+		'description' => 'expects timestamp (milliseconds) in ' . TIMEZONE . ' of last time updated, returns yes (1) when up to date else no (0)'
+	],
+	Parameter::GET_ME_UP_TO_DATE->value => [
+		'handle' => function() use ($db) {
+			$for = $_GET[Parameter::GET_ME_UP_TO_DATE->value];
+
+			$clients = [
+				'queues' =>		function () use ($db) : array {
+					return []; # TODO retrieve appropiete data from the database
+				},
+				'secretary' =>	function () use ($db) : array {
+					require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
+					// TODO? it works, but I don't like AssemblerOperate here, can be decomposed, I don't want to
+					
+					if( AssemblerOperate::operator_is(Operator::Secretary) === false ) {
+						return [];
+					}
+					else {
+						return $db->retrieve("interviewee"); # TODO update when retrive gets updates to work better with db views?
+					}
+				},
+				'gatekeeper' =>	function () use ($db) : array {
+					require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
+					
+					if( AssemblerOperate::operator_is(Operator::Gatekeeper) === false ) {
+						return [];
+					}
+					else {
+						return []; # TODO update when retrive gets updates to work better with db views?
+					}
+				},
+			];
+
+			echo json_encode(isset($clients[$for]) === true ? $clients[$for]() : []);
+		},
+		'description' => "expects 'queues', 'secretary' or 'gatekeeper', returns JSON with appropriate data"
+	],
+	Parameter::WANT_TO_MAKE_CHANGES->value => [
+		'handle' => function() use ($db) {
+			# TODO
+		},
+		'description' => 'expects timestamp (milliseconds) in ' . TIMEZONE . ' of last time updated, returns ok (1) when changes are accepted else not ok (0)' # TODO probably return JSON to give a reason?
+	],
 ];
 
-$for = $_GET[Parameter::FOR->value];
-
-if (in_array($for, array_keys($request_data)) === false) {
-	produce(Event::ERROR, "unknown value of '" . Parameter::FOR->value . "' parameter: {$for}\n");
-	exit(0);
+if(isset($parameters[array_key_first($_GET)])) {
+	$parameters[array_key_first($_GET)]['handle']();
 }
-
-// ---
-
-header("Content-Type: text/event-stream");
-header("Cache-Control: no-cache");
-header("X-Accel-Buffering: no");
-
-try {
-	$conf = (require $_SERVER['DOCUMENT_ROOT'] . '/.private/config.php')['dbms'];
-
-	$listener = new PDO(
-		"pgsql:host={$conf['host']};dbname={$conf['dbname']}", $conf['user'], $conf['password'],
-		[
-			PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-			PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-			PDO::ATTR_EMULATE_PREPARES   => false,
-		]
-	);
+else {
+	echo "No valid parameter given as first, acceptable parameters:\n";
+	echo "\n";
 	
-	$listener->exec("LISTEN " . Postgres::$UPDATE_CHANNEL . ";");
-	
-	while (connection_aborted() === 0) {
-
-		$notification = $listener->pgsqlGetNotify(PDO::FETCH_ASSOC, 25_000); // at 30_000 php timesout
-
-		if ($notification === false) {
-			continue;
-		}
-
-		produce(Event::UPDATE, json_encode($request_data[$for]()));
+	foreach ($parameters as $parameter_name => $parameter) {
+		echo implode("\n", [
+			'-> ' . $parameter_name,
+			$parameter['description'],
+			"\n"
+		]);
 	}
-
-	$listener = null;
-} 
-catch (PDOException $e) {
-	produce(Event::ERROR, $e->getMessage());
 }

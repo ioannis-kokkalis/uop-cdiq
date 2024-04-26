@@ -41,7 +41,7 @@ function form_submission_preprocess() : array | false {
 }
 
 if(($parameters = form_submission_preprocess()) !== false) {
-	database()->handle_update($parameters['update'], $parameters['arguments']);
+	database()->update_handle($parameters['update'], $parameters['arguments']);
 
 	// TODO temporar solution to avoid form re-submit on refresh after coming from a submit
 	// can be done better with https://en.wikipedia.org/wiki/Post/Redirect/Get
@@ -107,13 +107,9 @@ $a->assemble();
 
 <script src="/script/utilities.js"></script>
 <script src="/script/secretary.js"></script>
+<script src="/script/short_polling.js"></script>
 <script>
-	const init_data = '<?php
-		require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/database.php';
-		$db = database();
-
-		echo json_encode($db->retrieve("interviewee"));
-	?>';
-	
-	update(JSON.parse(init_data));
+	short_polling(3 /* seconds */, /* for */ 'secretary', /* to retrieve */ (data) => {
+		update(data);
+	});
 </script>
