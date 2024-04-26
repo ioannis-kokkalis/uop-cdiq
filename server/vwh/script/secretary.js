@@ -138,6 +138,13 @@ form.addEventListener("submit", function (event) {
 
 	if(confirm_message !== null) {
 		if (confirm("You will be: " + confirm_message) === true) {
+			// TODO send async at '/_update.php?' with the last_update_timestamp
+			// in the meantime tell to user to wait
+			// if async returns ok then tell user everything is okey
+			// if not tell him that nothing changed you can retry
+			// maybe return a reason string else nothing if everything went ok
+			// in any case prevent default to avoid refreshing
+
 			// don't event.preventDefault();
 			return;
 		}
@@ -192,16 +199,3 @@ function update(data) {
 	// // </div>
 	// });
 }
-
-// ...
-
-const event_source = new EventSource("/_update.php?for=secretary");
-
-event_source.addEventListener("update", (e) => {
-	update(JSON.parse(e.data));
-});
-
-event_source.addEventListener("uerror", (e) => {
-	alert("Updating from EventSource does not work properly: " + e.data);
-	event_source.close();
-});

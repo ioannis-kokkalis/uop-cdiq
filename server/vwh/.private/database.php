@@ -3,6 +3,8 @@
 // TODO maybe add error codes on the inerfaces for better responses and return values
 // public const ERROR_XYZ = 1;
 
+date_default_timezone_set("UTC");
+
 enum Update {
 	case SECRETARY_ADD_INTERVIEWEE;
 	case SECRETARY_DELETE_INTERVIEWEE; // TODO needs update after SECRETARY_ENQUEUE
@@ -60,7 +62,8 @@ interface Database {
 	 * @return false when the password has no match
 	 */
 	public function operator_mapping(string $password) : string|false;
-	public function handle_update(Update $update, UpdateArguments $arguments) : bool;
+	public function update_handle(Update $update, UpdateArguments $arguments) : bool; # TODO revert name update_handle
+	public function update_happened_recent() : DateTime;
 
 	public function retrieve(string ...$from_table) : array;
 }
@@ -135,7 +138,7 @@ class Postgres implements Database, DatabaseAdmin {
 		});
 	}
 
-	public function handle_update(Update $update, UpdateArguments $arguments) : bool {
+	public function update_handle(Update $update, UpdateArguments $arguments) : bool {
 		$handled = $this->connect(true, function() use ($update, $arguments) {
 			$this->pdo->beginTransaction();
 
@@ -187,6 +190,10 @@ class Postgres implements Database, DatabaseAdmin {
 					default: break;
 				}
 
+				if($updated === true) { # TODO recreate it with triggers in the database when one of the tables is affected?
+					$this->pdo->query("INSERT INTO update_timestamps (happened) VALUES (NOW());");
+				}
+
 				$this->pdo->commit();
 			}
 			catch (Throwable $th) {
@@ -202,10 +209,24 @@ class Postgres implements Database, DatabaseAdmin {
 		});
 
 		if($handled === true && $update !== Update::SYSTEM_ENQUEUED_TO_CALLING ) {
-			$this->handle_update(Update::SYSTEM_ENQUEUED_TO_CALLING, new UpdateArguments());
+			$this->update_handle(Update::SYSTEM_ENQUEUED_TO_CALLING, new UpdateArguments());
 		}
 
 		return $handled;
+	}
+
+	public function update_happened_recent() : DateTime {
+		return $this->connect(true, function() {
+			$statement = $this->pdo->query("SELECT MAX(happened) as recent from update_timestamps;");
+
+			if($statement === false || ($recent = $statement->fetch()['recent']) === null) {
+				return (new DateTime())->setTimestamp(0);
+			}
+
+			$recent = DateTime::createFromFormat('Y-m-d H:i:s.u', $recent);
+
+			return $recent === false ? (new DateTime())->setTimestamp(0) : $recent;
+		});
 	}
 
 	public function retrieve(string ...$from_table) : array {
@@ -252,6 +273,8 @@ class Postgres implements Database, DatabaseAdmin {
 					reminder VARCHAR(255) NOT NULL
 				);",
 
+				# ---
+
 				"CREATE TABLE IF NOT EXISTS interviewee (
 					id SERIAL PRIMARY KEY,
 
@@ -280,6 +303,12 @@ class Postgres implements Database, DatabaseAdmin {
 
 					state VARCHAR(255) NOT NULL,
 					state_timestamp TIMESTAMP NOT NULL
+				);",
+
+				# ---
+
+				"CREATE TABLE IF NOT EXISTS update_timestamps (
+					happened TIMESTAMP NOT NULL -- in UTC
 				);",
 
 			];

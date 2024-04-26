@@ -122,10 +122,16 @@ class AssemblerOperate extends Assembler {
 		exit;
 	}
 
+	public static function operator_is(Operator $operator) : bool {
+		if (session_status() === PHP_SESSION_NONE) {
+			session_start();
+		}
+		return isset($_SESSION[AssemblerOperate::$SESSION_OPERATOR_INDEX]) === true
+			&& $_SESSION[AssemblerOperate::$SESSION_OPERATOR_INDEX] === $operator;
+	}
+
 	public function operator_ensure(Operator $operator) {
-		if( isset($_SESSION[AssemblerOperate::$SESSION_OPERATOR_INDEX]) === false
-			|| $_SESSION[AssemblerOperate::$SESSION_OPERATOR_INDEX] !== $operator
-		) {
+		if( AssemblerOperate::operator_is($operator) === false ) {
 			header('Location: /costas/vasilakis.php');
 			exit;
 		}
