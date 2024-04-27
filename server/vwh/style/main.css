@@ -113,6 +113,34 @@ form input[type="file"] {
 	gap: .75rem;
 }
 
+dialog {
+	width: auto;
+
+    border: 1px solid #5f5f5f;
+
+    margin: auto 1rem;
+    padding: 1rem;
+}
+
+dialog::backdrop {
+	background-color: rgba(0, 0, 0, 0.4);
+}
+
+dialog > .dialog_content {
+	display: flex;
+	flex-direction: column;
+
+	gap: .75rem;
+}
+
+dialog > .dialog_content > p {
+	text-align: center;
+}
+
+dialog button {
+	padding: .4rem .8rem;
+}
+
 hr {
 	margin: .8rem 0;
 	border: 1px solid #5f5f5f;
@@ -134,5 +162,12 @@ h1, h2, h3, h4, h5, h6 {
 @media screen and (min-width: 501px) {
 	main {
 		max-width: 650px;
+	}
+	
+	dialog {
+		width: 50%;
+		max-width: 450px;
+
+		margin: auto;
 	}
 }

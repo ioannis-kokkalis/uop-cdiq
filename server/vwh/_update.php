@@ -72,9 +72,10 @@ $parameters = [
 	],
 	Parameter::WANT_TO_MAKE_CHANGES->value => [
 		'handle' => function() use ($db) {
-			# TODO
+			# TODO move here form submiting handling for all cases that have to update the db
+			echo random_int(0, 1) === 0 ? 'ok' : 'reason of denial (probably just behind on updates)';
 		},
-		'description' => 'expects timestamp (milliseconds) in ' . TIMEZONE . ' of last time updated, returns ok (1) when changes are accepted else not ok (0)' # TODO probably return JSON to give a reason?
+		'description' => "expects timestamp (milliseconds) in " . TIMEZONE . " of last time updated, returns 'ok' when changes are accepted else the reason of denial as string"
 	],
 ];
 

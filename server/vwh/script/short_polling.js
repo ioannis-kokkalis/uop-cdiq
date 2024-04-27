@@ -1,5 +1,6 @@
+let last_updated_timestamp = 0;
+
 function short_polling(interval_in_seconds, for_page, callback_with_JSON_parsed_data) {
-	let last_updated_timestamp = 0;
 
 	const short_poll = {
 		interval: interval_in_seconds * 1000,
@@ -51,8 +52,10 @@ function short_polling(interval_in_seconds, for_page, callback_with_JSON_parsed_
 			r.onreadystatechange = function () {
 				if (r.readyState === XMLHttpRequest.DONE) {
 					if (r.status === 200) {
-						last_updated_timestamp = Date.now();
 						callback_with_JSON_parsed_data(JSON.parse(r.responseText));
+						last_updated_timestamp = Date.now(); // keep after, so form submissions sync with UI etc
+						// TODO update it so it reflects the update timestamp that it receive
+						// make the database respond with a transactoion that includes two queries on the two table
 					}
 					else {
 						console.error('Data retrieval failed with status:', r.status);
