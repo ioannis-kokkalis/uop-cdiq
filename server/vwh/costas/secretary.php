@@ -59,8 +59,9 @@ $a->body_main = function() {
 	// 	echo "{$key} => {$value}<br>";
 	// } ?>
 
-	<form id="form" method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-
+	<form id="form"> <!-- submitting with JavaScript XMLHttpRequest -->
+		<!--  TODO (haha) maybe consider static form submission in case JS is disabled -->
+		
 		<fieldset id="iwee"> <!-- interviewee -->
 			<legend>Interviewee</legend>
 
@@ -106,8 +107,8 @@ $a->assemble();
 ?>
 
 <script src="/script/utilities.js"></script>
-<script src="/script/secretary.js"></script>
 <script src="/script/short_polling.js"></script>
+<script src="/script/secretary.js"></script>
 <script>
 	short_polling(3 /* seconds */, /* for */ 'secretary', /* to retrieve */ (data) => {
 		update(data);

@@ -89,7 +89,14 @@ iwee_select.addEventListener('change', function () {
 	display(this.options[this.selectedIndex] !== iwee_option_empty, [iwee_buttons]);
 });
 
+const dialog_processing = dialog_create("Processing...");
+const dialog_success = dialog_create_closable("Success!");
+
 form.addEventListener("submit", function (event) {
+	const timestamp_when_pressing_submit = last_updated_timestamp
+
+	event.preventDefault();
+
 	confirm_message = (() => {
 		let ret_value = null;
 		
@@ -138,20 +145,38 @@ form.addEventListener("submit", function (event) {
 
 	if(confirm_message !== null) {
 		if (confirm("You will be: " + confirm_message) === true) {
-			// TODO send async at '/_update.php?' with the last_update_timestamp
-			// in the meantime tell to user to wait
-			// if async returns ok then tell user everything is okey
-			// if not tell him that nothing changed you can retry
-			// maybe return a reason string else nothing if everything went ok
-			// in any case prevent default to avoid refreshing
+			dialog_processing.showModal();
 
-			// don't event.preventDefault();
+			const request = new XMLHttpRequest();
+
+			request.onreadystatechange = function () {
+				if (request.readyState === XMLHttpRequest.DONE) {
+					
+					if (request.status === 200) {
+						const response = request.responseText.trim();
+						
+						if( response === 'ok' ) { 
+							dialog_success.showModal();
+						}
+						else {
+							dialog_create_closable('Nothing changed, this is normal behavior, just try again: ' + response).showModal();
+							// TODO maybe make the dialog message updatable instead of creating new dialog each time
+						}
+					}
+					else {
+						dialog_create_closable('Server error! Status: ' + request.status).showModal();
+					}
+
+					dialog_processing.close();
+				}
+			};
+
+			request.open('POST', '/_update.php?want_to_make_changes=' + timestamp_when_pressing_submit);
+			request.send();
+
 			return;
 		}
 	}
-
-	event.preventDefault();
-	return;
 });
 
 // ...
