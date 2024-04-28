@@ -63,7 +63,10 @@ interface Database {
 	 */
 	public function operator_mapping(string $password) : string|false;
 	public function update_handle(Update $update, UpdateArguments $arguments) : bool; # TODO revert name update_handle
-	public function update_happened_recent() : DateTime;
+	/**
+	 * @return int id
+	 */
+	public function update_happened_recent() : int;
 
 	public function retrieve(string ...$from_table) : array;
 }
@@ -77,7 +80,6 @@ interface DatabaseAdmin {
 }
 
 class Postgres implements Database, DatabaseAdmin {
-	public static string $UPDATE_CHANNEL = "update_channel";
 
 	private array $conf;
 	private ?PDO $pdo;
@@ -191,17 +193,13 @@ class Postgres implements Database, DatabaseAdmin {
 				}
 
 				if($updated === true) { # TODO recreate it with triggers in the database when one of the tables is affected?
-					$this->pdo->query("INSERT INTO update_timestamps (happened) VALUES (NOW());");
+					$this->pdo->query("INSERT INTO updates (happened) VALUES (NOW());");
 				}
 
 				$this->pdo->commit();
 			}
 			catch (Throwable $th) {
 				$this->pdo->rollBack();
-			}
-			
-			if($updated === true) {
-				$this->pdo->query("NOTIFY ".Postgres::$UPDATE_CHANNEL.";");
 			}
 
 			return $updated;
@@ -215,17 +213,10 @@ class Postgres implements Database, DatabaseAdmin {
 		return $handled;
 	}
 
-	public function update_happened_recent() : DateTime {
+	public function update_happened_recent() : int {
 		return $this->connect(true, function() {
-			$statement = $this->pdo->query("SELECT MAX(happened) as recent from update_timestamps;");
-
-			if($statement === false || ($recent = $statement->fetch()['recent']) === null) {
-				return (new DateTime())->setTimestamp(0);
-			}
-
-			$recent = DateTime::createFromFormat('Y-m-d H:i:s.u', $recent);
-
-			return $recent === false ? (new DateTime())->setTimestamp(0) : $recent;
+			$statement = $this->pdo->query("SELECT * FROM update_recent_id;");
+			return $statement === false ? 0 : $statement->fetch()['recent'];
 		});
 	}
 
@@ -233,9 +224,21 @@ class Postgres implements Database, DatabaseAdmin {
 		return $this->connect(true, function () use ($from_table) {
 			$retrieved = [];
 
-			foreach($from_table as $table) {
-				$retrieved[$table] = $this->pdo->query("SELECT * FROM {$table};")->fetchAll(); 
+			$this->pdo->beginTransaction();
+			
+			try {
+				foreach($from_table as $table) {
+					$retrieved[$table] = $this->pdo->query("SELECT * FROM {$table};")->fetchAll(); 
+				}
+
+				$statement = $this->pdo->query("SELECT * FROM update_recent_id;");
+				$retrieved['update'] = $statement === false ? 0 : $statement->fetch()['recent'];
 			}
+			catch (Throwable $th) {
+				$this->pdo->rollBack();
+			}
+
+			$this->pdo->commit();
 
 			return $retrieved;
 		});
@@ -307,9 +310,23 @@ class Postgres implements Database, DatabaseAdmin {
 
 				# ---
 
-				"CREATE TABLE IF NOT EXISTS update_timestamps (
+				"CREATE TABLE IF NOT EXISTS updates (
+					id SERIAL,
 					happened TIMESTAMP NOT NULL -- in UTC
 				);",
+
+				# ---
+
+				"CREATE VIEW update_recent_id AS SELECT COALESCE(MAX(id),0) AS recent FROM updates;",
+
+				// // keep it in case of need can be removed in later comments
+				// "CREATE VIEW update_recent_ms AS
+				// 	SELECT COALESCE(
+				// 		FLOOR( MAX(EXTRACT(EPOCH FROM happened)) * 1000 ),
+				// 		0
+				// 	) AS recent
+				// 	FROM update_timestamps
+				// ;",
 
 			];
 
