@@ -93,7 +93,7 @@ const dialog_processing = dialog_create("Processing...");
 const dialog_success = dialog_create_closable("Success!");
 
 form.addEventListener("submit", function (event) {
-	const timestamp_when_pressing_submit = last_updated_timestamp
+	const update_id_when_pressing_submit = update_id
 
 	event.preventDefault();
 
@@ -171,7 +171,7 @@ form.addEventListener("submit", function (event) {
 				}
 			};
 
-			request.open('POST', '/_update.php?want_to_make_changes=' + timestamp_when_pressing_submit);
+			request.open('POST', '/_update.php?want_to_make_changes=' + update_id_when_pressing_submit);
 			request.send();
 
 			return;

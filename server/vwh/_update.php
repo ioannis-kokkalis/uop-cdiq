@@ -26,14 +26,12 @@ $parameters = [
 	Parameter::AM_I_UP_TO_DATE->value => [
 		'handle' => function() use ($db) {
 
-			$known = intval($_GET[Parameter::AM_I_UP_TO_DATE->value]);
-
-			$uhr = $db->update_happened_recent();
-			$recent = intval($uhr->format('U') . substr($uhr->format('u'), 0, 3));
+			$update_known = intval($_GET[Parameter::AM_I_UP_TO_DATE->value]);
+			$update_recent = $db->update_happened_recent();
 			
-			echo $recent > $known ? 0 : 1;
+			echo $update_recent > $update_known ? 0 : 1;
 		},
-		'description' => 'expects timestamp (milliseconds) in ' . TIMEZONE . ' of last time updated, returns yes (1) when up to date else no (0)'
+		'description' => 'expects update id, returns yes (1) when up to date else no (0)'
 	],
 	Parameter::GET_ME_UP_TO_DATE->value => [
 		'handle' => function() use ($db) {
@@ -75,7 +73,7 @@ $parameters = [
 			# TODO move here form submiting handling for all cases that have to update the db
 			echo random_int(0, 1) === 0 ? 'ok' : 'reason of denial (probably just behind on updates)';
 		},
-		'description' => "expects timestamp (milliseconds) in " . TIMEZONE . " of last time updated, returns 'ok' when changes are accepted else the reason of denial as string"
+		'description' => "expects update id, returns 'ok' when changes are accepted else the reason of denial as string"
 	],
 ];
 

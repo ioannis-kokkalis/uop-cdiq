@@ -1,4 +1,4 @@
-let last_updated_timestamp = 0;
+let update_id = 0;
 
 function short_polling(interval_in_seconds, for_page, callback_with_JSON_parsed_data) {
 
@@ -43,7 +43,7 @@ function short_polling(interval_in_seconds, for_page, callback_with_JSON_parsed_
 		do: function () {
 			short_poll.stop();
 
-			short_poll.request.open('GET', '/_update.php?am_i_up_to_date=' + last_updated_timestamp, true);
+			short_poll.request.open('GET', '/_update.php?am_i_up_to_date=' + update_id, true);
 			short_poll.request.send();
 		},
 
@@ -52,10 +52,9 @@ function short_polling(interval_in_seconds, for_page, callback_with_JSON_parsed_
 			r.onreadystatechange = function () {
 				if (r.readyState === XMLHttpRequest.DONE) {
 					if (r.status === 200) {
-						callback_with_JSON_parsed_data(JSON.parse(r.responseText));
-						last_updated_timestamp = Date.now(); // keep after, so form submissions sync with UI etc
-						// TODO update it so it reflects the update timestamp that it receive
-						// make the database respond with a transactoion that includes two queries on the two table
+						parsed_data = JSON.parse(r.responseText);
+						callback_with_JSON_parsed_data(parsed_data);
+						update_id = parsed_data['update']; // keep after, so form submissions sync with UI etc
 					}
 					else {
 						console.error('Data retrieval failed with status:', r.status);
