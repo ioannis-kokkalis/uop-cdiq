@@ -28,12 +28,14 @@ enum Update {
 }
 
 class UpdateArguments {
+	public readonly int $update_id_known;
 	public readonly int | null $iwee_id;
 	public readonly string | null $iwee_email;
 	public readonly array | null $iwer_id;
 	public readonly int | null $iw_id;
 
 	public function __construct(
+		int $update_id_known,
 		int | null $iwee_id = null,
 		string | null $iwee_email = null,
 		array | null $iwer_id = null,
@@ -42,11 +44,12 @@ class UpdateArguments {
 		if($iwer_id !== null) {
 			foreach ($iwer_id as $id) {
 				if(is_int($id) === false) {
-					throw new ErrorException("Array \$iwer_id bust contain only integers.");
+					throw new ErrorException("Array \$iwer_id must contain only integers.");
 				}
 			}
 		}
 		
+		$this->update_id_known = $update_id_known;
 		$this->iwee_id = $iwee_id;
 		$this->iwee_email = $iwee_email;
 		$this->iwer_id = $iwer_id;
@@ -62,7 +65,11 @@ interface Database {
 	 * @return false when the password has no match
 	 */
 	public function operator_mapping(string $password) : string|false;
-	public function update_handle(Update $update, UpdateArguments $arguments) : bool; # TODO revert name update_handle
+	/**
+	 * @return true on success
+	 * @return string on failure with the reason
+	 */
+	public function update_handle(Update $update, UpdateArguments $arguments) : true | string;
 	/**
 	 * @return int id
 	 */
@@ -78,6 +85,10 @@ interface DatabaseAdmin {
 	public function operator_add(string $type, string $password, string $reminder) : bool;
 	public function operator_remove(int|bool $id) : bool;
 }
+
+class UpdateHandleExpectedException extends Exception {}
+
+class UpdateHandleUnexpectedException extends Exception {}
 
 class Postgres implements Database, DatabaseAdmin {
 
@@ -140,77 +151,111 @@ class Postgres implements Database, DatabaseAdmin {
 		});
 	}
 
-	public function update_handle(Update $update, UpdateArguments $arguments) : bool {
-		$handled = $this->connect(true, function() use ($update, $arguments) {
-			$this->pdo->beginTransaction();
+	public function update_handle(Update $update, UpdateArguments $arguments) : true | string {
+		return $this->connect(true,
+			function() use ($update, $arguments) : true | string {
+				$result = true;
 
-			// TODO no need to do it for all updates, make it better (haha)
-			// TODO maybe have another to table as a locker for the time being?
-			$this->pdo->query('LOCK TABLE interview IN EXCLUSIVE MODE;');
-
-			$updated = false;
-
-			try {
-				switch ($update) {
-					case Update::SECRETARY_ADD_INTERVIEWEE:
-						if ($arguments->iwee_email === null) {
-							break;
-						}
-
-						// ===
-
-						$query = "INSERT INTO interviewee (email, active, available)
-							VALUES ('{$arguments->iwee_email}', true, true)
-							ON CONFLICT (email) DO NOTHING;
-						";
-
-						$this->pdo->query($query);
-
-						// ===
-						
-						$updated = true;
-						break;
-
-					case Update::SECRETARY_DELETE_INTERVIEWEE:
-						if ($arguments->iwee_id === null) {
-							break;
-						}
-
-						// ===
-
-						$query = "DELETE FROM interviewee WHERE id = {$arguments->iwee_id};";
-
-						$this->pdo->query($query);
-						
-						// TODO delete interviews related to iwee_id and handle related interviers availablility?
-
-						// ===
-
-						$updated = true;
-						break;
+				try {
+					if($this->pdo->beginTransaction() === false) {
+						throw new UpdateHandleUnexpectedException("unable to begin transaction");
+					}
 					
-					default: break;
+					// TODO (haha) no need to do it for all updates, make it better
+					if($this->pdo->query('LOCK TABLE interview IN EXCLUSIVE MODE;') === false) {
+						throw new UpdateHandleUnexpectedException("unable to acquire lock for shared data");
+					}
+					
+					$urid = $this->pdo->query("SELECT * FROM update_recent_id;");
+
+					if($urid === false) {
+						throw new UpdateHandleUnexpectedException("unable to retrieve recent update");
+					}
+					
+					if($urid->fetch()['recent'] !== $arguments->update_id_known) {
+						throw new UpdateHandleExpectedException("some updates happened before your submission, they should have been send to you by now or soon");
+					}
+
+					$updated = false;
+
+					switch ($update) { # TODO can be build better with classes probably?
+						case Update::SECRETARY_ADD_INTERVIEWEE:
+							if ($arguments->iwee_email === null) {
+								break;
+							}
+
+							// ===
+
+							$statement = $this->pdo->query("INSERT
+								INTO interviewee (email, active, available)
+								VALUES ('{$arguments->iwee_email}', true, true)
+								ON CONFLICT (email) DO NOTHING;
+							");
+							
+							// ===
+							
+							$updated = $statement !== false;
+							break;
+
+						case Update::SECRETARY_DELETE_INTERVIEWEE:
+							if ($arguments->iwee_id === null) {
+								break;
+							}
+
+							// ===
+							
+							# TODO if unavailable dont delete
+
+							$statement =  $this->pdo->query("DELETE
+								FROM interviewee
+								WHERE id = {$arguments->iwee_id};
+							");
+							
+							// TODO delete interviews related to iwee_id and handle related interviers availablility?
+
+							// ===
+
+							$updated = $statement !== false;
+							break;
+
+						default: break;
+					}
+
+					if($updated === true) {
+						# $this->update_handle(Update::SYSTEM_ENQUEUED_TO_CALLING, new UpdateArguments());
+						# TODO do it here dont call update_handle again for simplicity
+
+						if($this->pdo->query("INSERT INTO updates (happened) VALUES (NOW());") === false) {
+							throw new UpdateHandleUnexpectedException("unable to insert update timestamp");
+						}
+						# TODO recreate it with triggers in the database when one of the tables is affected?
+					}
+					# TODO if not updated throw exception (thus roll backing)
+					# parameters should be validated with classes earlier (check TODO on switch above)
+					# so the only reason to fail during updating is for something unexpected?
+
+					if($this->pdo->commit() === false) {
+						throw new UpdateHandleUnexpectedException("unable to commit transaction");
+					}
+				}
+				catch (UpdateHandleUnexpectedException $e) {
+					$result = "(should not happen) " . $e->getMessage();
+				}
+				catch (UpdateHandleExpectedException $e) {
+					$result = $e->getMessage();
+				}
+				catch (Throwable $th) {
+					$result = "(did not know that will happen) " . $th->getMessage();
+				}
+				finally {
+					if($this->pdo->inTransaction()) {
+						$this->pdo->rollBack();
+					}
 				}
 
-				if($updated === true) { # TODO recreate it with triggers in the database when one of the tables is affected?
-					$this->pdo->query("INSERT INTO updates (happened) VALUES (NOW());");
-				}
-
-				$this->pdo->commit();
+				return $result;
 			}
-			catch (Throwable $th) {
-				$this->pdo->rollBack();
-			}
-
-			return $updated;
-
-		});
-
-		if($handled === true && $update !== Update::SYSTEM_ENQUEUED_TO_CALLING ) {
-			$this->update_handle(Update::SYSTEM_ENQUEUED_TO_CALLING, new UpdateArguments());
-		}
-
-		return $handled;
+		);
 	}
 
 	public function update_happened_recent() : int {

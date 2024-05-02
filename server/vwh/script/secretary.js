@@ -171,8 +171,8 @@ form.addEventListener("submit", function (event) {
 				}
 			};
 
-			request.open('POST', '/_update.php?want_to_make_changes=' + update_id_when_pressing_submit);
-			request.send();
+			request.open('POST', '/_update.php?want_to_make_changes=' + update_id_when_pressing_submit, true);
+			request.send(new FormData(form, event.submitter));
 
 			return;
 		}

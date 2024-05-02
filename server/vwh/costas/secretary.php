@@ -8,56 +8,7 @@ $a->operator_ensure(Operator::Secretary);
 
 // ---
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/database.php';
-
-function form_submission_preprocess() : array | false {
-	if(isset($_POST) === false) {
-		return false;
-	}
-	
-	$parameters = [
-		'update' => null,
-		'arguments' => new UpdateArguments(),
-	];
-
-	if(
-		isset($_POST['form_button_update'])
-		&& isset($_POST['iwee_select']) && $_POST['iwee_select'] === 'null'
-		&& isset($_POST['iwee_filter']) && $_POST['iwee_filter'] !== ''
-	) {
-		$parameters['update'] = Update::SECRETARY_ADD_INTERVIEWEE;
-		$parameters['arguments'] = new UpdateArguments(iwee_email: $_POST['iwee_filter']);
-	}
-	else if (
-		isset($_POST['iwee_button_delete'])
-		&& isset($_POST['iwee_select']) && $_POST['iwee_select'] !== 'null'
-		&& intval($_POST['iwee_select']) !== 0
-	) {
-		$parameters['update'] = Update::SECRETARY_DELETE_INTERVIEWEE;
-		$parameters['arguments'] = new UpdateArguments(iwee_id: intval($_POST['iwee_select']));
-	}
-
-	return $parameters['update'] === null ? false : $parameters;
-}
-
-if(($parameters = form_submission_preprocess()) !== false) {
-	database()->update_handle($parameters['update'], $parameters['arguments']);
-
-	// TODO temporar solution to avoid form re-submit on refresh after coming from a submit
-	// can be done better with https://en.wikipedia.org/wiki/Post/Redirect/Get
-	// or maybe make the form sumbission async with ajax and display a message of completion
-	// or failure (without clearing the form) to avoid sharing data problem
-	header('Location: ' . $_SERVER['PHP_SELF']);
-	exit(0);
-}
-
-// ---
-
-$a->body_main = function() {
-
-	// foreach ($_POST as $key => $value) {
-	// 	echo "{$key} => {$value}<br>";
-	// } ?>
+$a->body_main = function() { ?>
 
 	<form id="form"> <!-- submitting with JavaScript XMLHttpRequest -->
 		<!--  TODO (haha) maybe consider static form submission in case JS is disabled -->
@@ -110,7 +61,7 @@ $a->assemble();
 <script src="/script/short_polling.js"></script>
 <script src="/script/secretary.js"></script>
 <script>
-	short_polling(3 /* seconds */, /* for */ 'secretary', /* to retrieve */ (data) => {
+	short_polling(2 /* seconds */, /* for */ 'secretary', /* to retrieve */ (data) => {
 		update(data);
 	});
 </script>
