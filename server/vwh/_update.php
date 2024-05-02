@@ -70,8 +70,56 @@ $parameters = [
 	],
 	Parameter::WANT_TO_MAKE_CHANGES->value => [
 		'handle' => function() use ($db) {
-			# TODO move here form submiting handling for all cases that have to update the db
-			echo random_int(0, 1) === 0 ? 'ok' : 'reason of denial (probably just behind on updates)';
+
+			require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
+
+			if( AssemblerOperate::operator_is(Operator::Secretary) === false
+				&& AssemblerOperate::operator_is(Operator::Gatekeeper) === false ) {
+				echo "unauthorized access";
+				return;
+			}
+
+			function form_submission_preprocess() : array | false {
+				if(isset($_POST) === false) {
+					return false;
+				}
+				
+				$update_known = intval($_GET[Parameter::WANT_TO_MAKE_CHANGES->value]);
+
+				$parameters = [
+					'update' => null,
+					'arguments' => new UpdateArguments($update_known),
+				];
+			
+				if(
+					isset($_POST['form_button_update'])
+					&& isset($_POST['iwee_select']) && $_POST['iwee_select'] === 'null'
+					&& isset($_POST['iwee_filter']) && $_POST['iwee_filter'] !== ''
+				) {
+					$parameters['update'] = Update::SECRETARY_ADD_INTERVIEWEE;
+					$parameters['arguments'] = new UpdateArguments($update_known, iwee_email: $_POST['iwee_filter']);
+				}
+				else if (
+					isset($_POST['iwee_button_delete'])
+					&& isset($_POST['iwee_select']) && $_POST['iwee_select'] !== 'null'
+					&& intval($_POST['iwee_select']) !== 0
+				) {
+					$parameters['update'] = Update::SECRETARY_DELETE_INTERVIEWEE;
+					$parameters['arguments'] = new UpdateArguments($update_known, iwee_id: intval($_POST['iwee_select']));
+				}
+
+				return $parameters['update'] === null ? false : $parameters;
+			}
+			
+			if(($parameters = form_submission_preprocess()) !== false) {
+				$true_or_reason = $db->update_handle($parameters['update'], $parameters['arguments']);
+				echo $true_or_reason === true ? 'ok' : $true_or_reason;
+			}
+			else {
+				echo 'unknown change';
+			}
+
+			return;
 		},
 		'description' => "expects update id, returns 'ok' when changes are accepted else the reason of denial as string"
 	],
