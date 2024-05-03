@@ -8,21 +8,13 @@ function display(true_false, elements) {
 function dialog_create(message) {
 	let dialog = document.body.appendChild(document.createElement('dialog'));
 
-	let content = dialog.appendChild(document.createElement('div'));
-	content.classList.add('dialog_content');
-
-	content.appendChild(document.createElement('p')).innerHTML = message;
+	dialog.appendChild(document.createElement('p')).innerHTML = message;
 
 	return dialog;
 }
 
 function dialog_create_closable(message) {
-	let dialog = document.body.appendChild(document.createElement('dialog'));
-
-	let content = dialog.appendChild(document.createElement('div'));
-	content.classList.add('dialog_content');
-
-	content.appendChild(document.createElement('p')).innerHTML = message;
+	let dialog = dialog_create(message);
 
 	let close_button = document.createElement('button');
 	close_button.innerHTML = 'Continue';
@@ -30,7 +22,7 @@ function dialog_create_closable(message) {
 		dialog.close();
 	});
 
-	content.appendChild(close_button);
+	dialog.appendChild(close_button);
 
 	return dialog;
 }
