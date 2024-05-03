@@ -18,6 +18,7 @@ body, header, footer, main, nav, hr, p {
 
 html {
 	font-family: local-font-family;
+	word-break: break-word;
 }
 
 body {
@@ -103,6 +104,10 @@ form input::file-selector-button
 
 form input[type="file"] {
 	padding: 0;
+}
+
+form select {
+	width: 100%;
 }
 
 .horizontal_buttons {

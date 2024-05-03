@@ -57,7 +57,7 @@ iwee_filter.addEventListener('input', function () {
 		
 		const oi = iwee_select.options[i];
 		
-		if (oi.text.search(this.value) === -1) {
+		if (oi.text.indexOf(this.value) === -1) {
 			options_off.push(oi);
 		}
 		else {
@@ -72,7 +72,7 @@ iwee_filter.addEventListener('input', function () {
 		display( true, [iwee_notice]);
 		display(false, [iwee_select]);
 
-		iwee_notice.innerText = 'An Interviewee as "' + this.value + '" will be created, there is not an existing one.';
+		iwee_notice.innerText = 'An Interviewee with email "' + this.value + '" will be created, there is not an existing one.';
 		iwee_option_empty.selected = true;
 	}
 	else {
@@ -90,7 +90,7 @@ iwee_select.addEventListener('change', function () {
 });
 
 const dialog_processing = dialog_create("Processing...");
-const dialog_success = dialog_create_closable("Success!");
+const dialog_success = dialog_create_closable("Success :3");
 
 form.addEventListener("submit", function (event) {
 	const update_id_when_pressing_submit = update_id
@@ -159,7 +159,7 @@ form.addEventListener("submit", function (event) {
 							dialog_success.showModal();
 						}
 						else {
-							dialog_create_closable('Nothing changed, this is normal behavior, just try again: ' + response).showModal();
+							dialog_create_closable('Failure, reason: ' + response).showModal();
 							// TODO maybe make the dialog message updatable instead of creating new dialog each time
 						}
 					}
