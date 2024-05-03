@@ -5,59 +5,285 @@
 
 date_default_timezone_set("UTC");
 
-enum Update {
-	case SECRETARY_ADD_INTERVIEWEE;
-	case SECRETARY_DELETE_INTERVIEWEE; // TODO needs update after SECRETARY_ENQUEUE
-	case SECRETARY_ENQUEUE; // TODO
-	case SECRETARY_ENQUEUED_TO_DEQUEUED; // TODO
-	case SECRETARY_ACTIVE_TO_INACTIVE_INTERVIEWEE; // TODO
-	case SECRETARY_INACTIVE_TO_ACTIVE_INTERVIEWEE; // TODO
-	case SECRETARY_ADD_INTERVIEWER; // TODO
-	case SECRETARY_REMOVE_INTERVIEWER; // TODO
-	
-	case SYSTEM_ENQUEUED_TO_CALLING; // TODO // checks and updates if needed // maybe do this after any update
-	case SYSTEM_CALLING_TO_DESICION; // TODO // checks and updates if needed
+abstract class UpdateRequest {
 
-	case GATEKEEPER_ACTIVE_TO_INACTIVE_INTERVIEWER; // TODO // MANAGER_AVAILABLE_PAUSE & MANAGER_CALLING_PAUSE
-	case GATEKEEPER_INACTIVE_TO_ACTIVE_INTERVIEWER; // TODO
-	case GATEKEEPER_CALLING_TO_HAPPENING; // TODO
-	case GATEKEEPER_CALLING_TO_DEQUEUED; // TODO
-	case GATEKEEPER_DESICION_TO_HAPPENING; // TODO
-	case GATEKEEPER_DESICION_TO_DEQUEUED; // TODO
-	case GATEKEEPER_HAPPENING_TO_COMPLETED; // TODO // + GATEKEEPER_HAPPENING_TO_COMPLETED_AND_ACTIVE_TO_INACTIVE_INTERVIEWER; // unecessary since you can active/inactive before completion if you want?
-}
+	public readonly int $update_id_known; # when creating the request
 
-class UpdateArguments {
-	public readonly int $update_id_known;
-	public readonly int | null $iwee_id;
-	public readonly string | null $iwee_email;
-	public readonly array | null $iwer_id;
-	public readonly int | null $iw_id;
-
-	public function __construct(
-		int $update_id_known,
-		int | null $iwee_id = null,
-		string | null $iwee_email = null,
-		array | null $iwer_id = null,
-		int | null $iw_id = null
-	) { 
-		if($iwer_id !== null) {
-			foreach ($iwer_id as $id) {
-				if(is_int($id) === false) {
-					throw new ErrorException("Array \$iwer_id must contain only integers.");
-				}
-			}
-		}
-		
+	public function __construct(int $update_id_known) {
 		$this->update_id_known = $update_id_known;
-		$this->iwee_id = $iwee_id;
-		$this->iwee_email = $iwee_email;
-		$this->iwer_id = $iwer_id;
-		$this->iw_id = $iw_id;
-		
-		// TODO sanitization?
 	}
+
+	public final function dispatch(PDO $pdo) : true | string {
+		try {
+			if($pdo === null) {
+				throw new Exception("no connection to the database");
+			}
+
+			if($pdo->inTransaction() === false) {
+				throw new Exception("connection to the database not in transaction");
+			}
+
+			$this->process($pdo);
+
+			return true;
+		}
+		catch(Throwable $t) {
+			return $t->getMessage();
+		}
+	}
+
+	/**
+	 * Assumes the PDO given has connected and selected the database while in a transaction wihout interuptions.
+	 * 
+	 * The fucntion should not handle exceptions involving the PDO and should throw exceptions when cannot complete the request because of the data given. The message of the exception should be the reason.
+	 */
+	protected abstract function process(PDO $pdo) : void;
+
 }
+
+class SecretaryAddInterviewee extends UpdateRequest {
+
+	private readonly string $iwee_email;
+
+	public function __construct(int $update_id_known, string $iwee_email) {
+		parent::__construct($update_id_known);
+
+		$email = filter_var(trim($iwee_email), FILTER_SANITIZE_EMAIL);
+		$email = filter_var($email, FILTER_VALIDATE_EMAIL);
+
+		if($email === false || $email !== $iwee_email) {
+			throw new InvalidArgumentException("invalid email address provided");
+		}
+
+		$this->iwee_email = $email;
+	}
+
+	public function process(PDO $pdo) : void {
+		$statement = $pdo->query("INSERT
+			INTO interviewee (email, active, available)
+			VALUES ('{$this->iwee_email}', true, true)
+			ON CONFLICT (email) DO NOTHING;
+		");
+
+		if($statement === false) {
+			throw new Exception("failed to execute query");
+		}
+	}
+	
+}
+
+class SecretaryDeleteInterviewee extends UpdateRequest {
+
+	private readonly int $iwee_id;
+
+	public function __construct(int $update_id_known, int $iwee_id) {
+		parent::__construct($update_id_known);
+
+		$this->iwee_id = $iwee_id;
+	}
+
+	public function process(PDO $pdo) : void {
+		$statement = $pdo->query("DELETE
+			FROM interviewee
+			WHERE id = {$this->iwee_id}
+			AND available = true;
+		");
+		# TODO probably break it into two queries so the exception can be more spesific
+
+		if($statement->rowCount() === 0) {
+			throw new Exception("interviewee still unavailable at the moment, can be deleted only when available");
+		}
+
+		# TODO delete interviews related to iwee_id with cascade?
+		# since the interviewee was available, no interviewer was unavailable due to
+		# this interviewee so cascade is just enough
+
+		if($statement === false) {
+			throw new Exception("failed to execute query");
+		}
+	}
+
+}
+
+class SecretaryEnqueue extends UpdateRequest {
+
+	public function __construct(int $update_id_known) {
+		parent::__construct($update_id_known);
+	}
+
+	protected function process(PDO $pdo): void {
+		throw new Exception("not implemented yet");
+	}
+
+}; // TODO
+
+class SecretaryEnqueuedToDequeued extends UpdateRequest {
+
+	public function __construct(int $update_id_known) {
+		parent::__construct($update_id_known);
+	}
+
+	protected function process(PDO $pdo): void {
+		throw new Exception("not implemented yet");
+	}
+
+}; // TODO
+
+class SecretaryActiveToInactiveInterviewee extends UpdateRequest {
+
+	public function __construct(int $update_id_known) {
+		parent::__construct($update_id_known);
+	}
+
+	protected function process(PDO $pdo): void {
+		throw new Exception("not implemented yet");
+	}
+
+}; // TODO
+
+class SecretaryInactiveToActiveInterviewee extends UpdateRequest {
+
+	public function __construct(int $update_id_known) {
+		parent::__construct($update_id_known);
+	}
+
+	protected function process(PDO $pdo): void {
+		throw new Exception("not implemented yet");
+	}
+
+}; // TODO
+
+class SecretaryAddInterviewer extends UpdateRequest {
+
+	public function __construct(int $update_id_known) {
+		parent::__construct($update_id_known);
+	}
+
+	protected function process(PDO $pdo): void {
+		throw new Exception("not implemented yet");
+	}
+
+}; // TODO
+
+class SecretaryRemoveInterviewer extends UpdateRequest {
+
+	public function __construct(int $update_id_known) {
+		parent::__construct($update_id_known);
+	}
+
+	protected function process(PDO $pdo): void {
+		throw new Exception("not implemented yet");
+	}
+
+}; // TODO
+
+class SystemEnqueuedToCalling extends UpdateRequest {
+
+	public function __construct(int $update_id_known) {
+		parent::__construct($update_id_known);
+	}
+
+	protected function process(PDO $pdo): void {
+		throw new Exception("not implemented yet");
+	}
+
+}; // TODO // checks and updates if needed // maybe do this after any update
+
+class SystemCallingToDecision extends UpdateRequest {
+
+	public function __construct(int $update_id_known) {
+		parent::__construct($update_id_known);
+	}
+
+	protected function process(PDO $pdo): void {
+		throw new Exception("not implemented yet");
+	}
+
+}; // TODO // checks and updates if needed
+
+class GatekeeperActiveToInactiveInterviewer extends UpdateRequest {
+
+	public function __construct(int $update_id_known) {
+		parent::__construct($update_id_known);
+	}
+
+	protected function process(PDO $pdo): void {
+		throw new Exception("not implemented yet");
+	}
+
+}; // TODO // MANAGER_AVAILABLE_PAUSE & MANAGER_CALLING_PAUSE
+
+class GatekeeperInactiveToActiveInterviewer extends UpdateRequest {
+
+	public function __construct(int $update_id_known) {
+		parent::__construct($update_id_known);
+	}
+
+	protected function process(PDO $pdo): void {
+		throw new Exception("not implemented yet");
+	}
+
+}; // TODO
+
+class GatekeeperCallingToHappening extends UpdateRequest {
+
+	public function __construct(int $update_id_known) {
+		parent::__construct($update_id_known);
+	}
+
+	protected function process(PDO $pdo): void {
+		throw new Exception("not implemented yet");
+	}
+
+}; // TODO
+
+class GatekeeperCallingToDequeued extends UpdateRequest {
+
+	public function __construct(int $update_id_known) {
+		parent::__construct($update_id_known);
+	}
+
+	protected function process(PDO $pdo): void {
+		throw new Exception("not implemented yet");
+	}
+
+}; // TODO
+
+class GatekeeperDecisionToHappening extends UpdateRequest {
+
+	public function __construct(int $update_id_known) {
+		parent::__construct($update_id_known);
+	}
+
+	protected function process(PDO $pdo): void {
+		throw new Exception("not implemented yet");
+	}
+
+}; // TODO
+
+class GatekeeperDecisionToDequeued extends UpdateRequest {
+
+	public function __construct(int $update_id_known) {
+		parent::__construct($update_id_known);
+	}
+
+	protected function process(PDO $pdo): void {
+		throw new Exception("not implemented yet");
+	}
+
+}; // TODO
+
+class GatekeeperHappeningToCompleted extends UpdateRequest {
+
+	public function __construct(int $update_id_known) {
+		parent::__construct($update_id_known);
+	}
+
+	protected function process(PDO $pdo): void {
+		throw new Exception("not implemented yet");
+	}
+
+}; // + GATEKEEPER_HAPPENING_TO_COMPLETED_AND_ACTIVE_TO_INACTIVE_INTERVIEWER; // unecessary since you can active/inactive before completion if you want?
 
 interface Database {
 	/**
@@ -69,7 +295,7 @@ interface Database {
 	 * @return true on success
 	 * @return string on failure with the reason
 	 */
-	public function update_handle(Update $update, UpdateArguments $arguments) : true | string;
+	public function update_handle(UpdateRequest $update_request) : true | string;
 	/**
 	 * @return int id
 	 */
@@ -151,9 +377,9 @@ class Postgres implements Database, DatabaseAdmin {
 		});
 	}
 
-	public function update_handle(Update $update, UpdateArguments $arguments) : true | string {
+	public function update_handle(UpdateRequest $update_request) : true | string {
 		return $this->connect(true,
-			function() use ($update, $arguments) : true | string {
+			function() use ($update_request) : true | string {
 				$result = true;
 
 				try {
@@ -172,56 +398,13 @@ class Postgres implements Database, DatabaseAdmin {
 						throw new UpdateHandleUnexpectedException("unable to retrieve recent update");
 					}
 					
-					if($urid->fetch()['recent'] !== $arguments->update_id_known) {
+					if($urid->fetch()['recent'] !== $update_request->update_id_known) {
 						throw new UpdateHandleExpectedException("some updates happened before your submission, they should have been send to you by now or soon");
 					}
 
-					$updated = false;
+					$updated_or_reason = $update_request->dispatch($this->pdo);
 
-					switch ($update) { # TODO can be build better with classes probably?
-						case Update::SECRETARY_ADD_INTERVIEWEE:
-							if ($arguments->iwee_email === null) {
-								break;
-							}
-
-							// ===
-
-							$statement = $this->pdo->query("INSERT
-								INTO interviewee (email, active, available)
-								VALUES ('{$arguments->iwee_email}', true, true)
-								ON CONFLICT (email) DO NOTHING;
-							");
-							
-							// ===
-							
-							$updated = $statement !== false;
-							break;
-
-						case Update::SECRETARY_DELETE_INTERVIEWEE:
-							if ($arguments->iwee_id === null) {
-								break;
-							}
-
-							// ===
-							
-							# TODO if unavailable dont delete
-
-							$statement =  $this->pdo->query("DELETE
-								FROM interviewee
-								WHERE id = {$arguments->iwee_id};
-							");
-							
-							// TODO delete interviews related to iwee_id and handle related interviers availablility?
-
-							// ===
-
-							$updated = $statement !== false;
-							break;
-
-						default: break;
-					}
-
-					if($updated === true) {
+					if($updated_or_reason === true) {
 						# $this->update_handle(Update::SYSTEM_ENQUEUED_TO_CALLING, new UpdateArguments());
 						# TODO do it here dont call update_handle again for simplicity
 
@@ -230,9 +413,9 @@ class Postgres implements Database, DatabaseAdmin {
 						}
 						# TODO recreate it with triggers in the database when one of the tables is affected?
 					}
-					# TODO if not updated throw exception (thus roll backing)
-					# parameters should be validated with classes earlier (check TODO on switch above)
-					# so the only reason to fail during updating is for something unexpected?
+					else {
+						throw new UpdateHandleExpectedException($updated_or_reason);
+					}
 
 					if($this->pdo->commit() === false) {
 						throw new UpdateHandleUnexpectedException("unable to commit transaction");
