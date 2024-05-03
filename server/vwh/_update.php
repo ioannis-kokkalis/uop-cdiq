@@ -79,44 +79,50 @@ $parameters = [
 				return;
 			}
 
-			function form_submission_preprocess() : array | false {
+			$form_submission_preprocess = (function() : UpdateRequest | string {
 				if(isset($_POST) === false) {
-					return false;
+					return "no POST data found";
 				}
 				
 				$update_known = intval($_GET[Parameter::WANT_TO_MAKE_CHANGES->value]);
 
-				$parameters = [
-					'update' => null,
-					'arguments' => new UpdateArguments($update_known),
-				];
-			
-				if(
-					isset($_POST['form_button_update'])
-					&& isset($_POST['iwee_select']) && $_POST['iwee_select'] === 'null'
-					&& isset($_POST['iwee_filter']) && $_POST['iwee_filter'] !== ''
-				) {
-					$parameters['update'] = Update::SECRETARY_ADD_INTERVIEWEE;
-					$parameters['arguments'] = new UpdateArguments($update_known, iwee_email: $_POST['iwee_filter']);
-				}
-				else if (
-					isset($_POST['iwee_button_delete'])
-					&& isset($_POST['iwee_select']) && $_POST['iwee_select'] !== 'null'
-					&& intval($_POST['iwee_select']) !== 0
-				) {
-					$parameters['update'] = Update::SECRETARY_DELETE_INTERVIEWEE;
-					$parameters['arguments'] = new UpdateArguments($update_known, iwee_id: intval($_POST['iwee_select']));
-				}
+				$update_request = null;
+				
+				try {
+					if(
+						isset($_POST['form_button_update'])
+						&& isset($_POST['iwee_select']) && $_POST['iwee_select'] === 'null'
+						&& isset($_POST['iwee_filter']) && $_POST['iwee_filter'] !== ''
+					) {
+						$update_request = new SecretaryAddInterviewee(
+							$update_known,
+							$_POST['iwee_filter']
+						);
+					}
+					else if (
+						isset($_POST['iwee_button_delete'])
+						&& isset($_POST['iwee_select']) && $_POST['iwee_select'] !== 'null'
+						&& intval($_POST['iwee_select']) !== 0
+					) {
+						$update_request = new SecretaryDeleteInterviewee(
+							$update_known,
+							intval($_POST['iwee_select'])
+						);
+					}
 
-				return $parameters['update'] === null ? false : $parameters;
-			}
-			
-			if(($parameters = form_submission_preprocess()) !== false) {
-				$true_or_reason = $db->update_handle($parameters['update'], $parameters['arguments']);
+					return $update_request === null ? 'unknown request' : $update_request;
+				}
+				catch(Throwable $th) {
+					return $th->getMessage();
+				}
+			})();
+
+			if(is_a($form_submission_preprocess, UpdateRequest::class) === true) {
+				$true_or_reason = $db->update_handle($form_submission_preprocess);
 				echo $true_or_reason === true ? 'ok' : $true_or_reason;
 			}
-			else {
-				echo 'unknown change';
+			else /* if(is_string($fsp) === true) */ {
+				echo $form_submission_preprocess;
 			}
 
 			return;
