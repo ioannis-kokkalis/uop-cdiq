@@ -49,7 +49,7 @@ $parameters = [
 						return [];
 					}
 					else {
-						return $db->retrieve("interviewee", "interviewer");
+						return $db->retrieve("interviewee", "interviewer", "interview");
 					}
 				},
 				'gatekeeper' =>	function () use ($db) : array {
@@ -141,6 +141,16 @@ $parameters = [
 						$update_request = new SecretaryDeleteInterviewer(
 							$update_known,
 							intval($_POST['iwer_info_dialog_id'])
+						);
+					}
+					else if(
+						isset($_POST['form_button_update'])
+						&& isset($_POST['iwee_select']) && $_POST['iwee_select'] !== 'null'
+					) {
+						$update_request = new SecretaryEnqueueDequeue(
+							$update_known,
+							intval($_POST['iwee_select']),
+							...(isset($_POST['interviewers']) ? $_POST['interviewers'] : [])
 						);
 					}
 
