@@ -102,30 +102,55 @@ class SecretaryDeleteInterviewee extends UpdateRequest {
 
 }
 
-class SecretaryEnqueue extends UpdateRequest {
+class SecretaryEnqueueDequeue extends UpdateRequest {
 
-	public function __construct(int $update_id_known) {
+	private readonly int $iwee_id;
+	private readonly array $iwer_ids_to_enqueue;
+
+	public function __construct(int $update_id_known, int $iwee_id, int ...$iwer_ids_to_enqueue) {
 		parent::__construct($update_id_known);
+
+		$this->iwee_id = $iwee_id;
+		$this->iwer_ids_to_enqueue = $iwer_ids_to_enqueue;
 	}
 
 	protected function process(PDO $pdo): void {
-		throw new Exception("not implemented yet");
+		$timestamp_enqueuing = $pdo->query("SELECT NOW();")->fetch()['now'];
+
+		if(count($this->iwer_ids_to_enqueue) > 0) {
+			$insert = "INSERT INTO interview (id_interviewer, id_interviewee, state_, state_timestamp) VALUES ";
+	
+			$values = [];
+
+			foreach ($this->iwer_ids_to_enqueue as $iwer_id) {
+				array_push($values, "({$iwer_id}, {$this->iwee_id}, 'ENQUEUED', '{$timestamp_enqueuing}')");
+			}
+
+			$insert .= implode(", ", $values);
+			$insert .= " ON CONFLICT ON CONSTRAINT pair_interviewer_interviewee DO ";
+			$insert .= "UPDATE
+				SET state_timestamp = EXCLUDED.state_timestamp
+				WHERE interview.state_ = EXCLUDED.state_
+			;";
+
+			if($pdo->query($insert) === false) {
+				throw new Exception("failed to execute query");
+			}
+		}
+
+		$statement = $pdo->query("DELETE
+			FROM interview
+			WHERE id_interviewee = {$this->iwee_id}
+			AND state_ = 'ENQUEUED'
+			AND state_timestamp < '{$timestamp_enqueuing}'
+		;");
+
+		if($statement === false) {
+			throw new Exception("failed to execute query");
+		}
 	}
 
-}; // TODO
-
-class SecretaryEnqueuedToDequeued extends UpdateRequest {
-	# TODO dequeue is not useful, just delete the row instead of dequeue
-
-	public function __construct(int $update_id_known) {
-		parent::__construct($update_id_known);
-	}
-
-	protected function process(PDO $pdo): void {
-		throw new Exception("not implemented yet");
-	}
-
-}; // TODO
+};
 
 class SecretaryActiveToInactiveInterviewee extends UpdateRequest {
 
@@ -512,6 +537,7 @@ class Postgres implements Database, DatabaseAdmin {
 					if($updated_or_reason === true) {
 						# $this->update_handle(Update::SYSTEM_ENQUEUED_TO_CALLING, new UpdateArguments());
 						# TODO do it here dont call update_handle again for simplicity
+						# probably fix availabilities too
 
 						if($this->pdo->query("INSERT INTO updates (happened) VALUES (NOW());") === false) {
 							throw new UpdateHandleUnexpectedException("unable to insert update timestamp");
@@ -637,8 +663,15 @@ class Postgres implements Database, DatabaseAdmin {
 
 					id_interviewer INTEGER NOT NULL REFERENCES interviewer(id),
 					id_interviewee INTEGER NOT NULL REFERENCES interviewee(id),
+					CONSTRAINT pair_interviewer_interviewee UNIQUE (id_interviewer, id_interviewee),
 
-					state VARCHAR(255) NOT NULL,
+					state_ VARCHAR(255) CHECK (state_ IN (
+						'ENQUEUED',
+						'CALLING',
+						'DECISION',
+						'HAPPENING',
+						'COMPLETED'
+					)),
 					state_timestamp TIMESTAMP NOT NULL
 				);",
 
