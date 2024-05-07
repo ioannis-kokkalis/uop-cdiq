@@ -33,12 +33,10 @@ class Assembler {
 
 	protected function head() : void {
 		?>
-		<head>
-			<meta charset="UTF-8">
-			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<link rel="stylesheet" href="<?= $this->head_stylesheet->value ?>">
-			<title><?= $this->head_title ?></title>
-		</head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="<?= $this->head_stylesheet->value ?>">
+		<title><?= $this->head_title ?></title>
 		<?php
 	}
 
