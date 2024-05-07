@@ -1,8 +1,5 @@
 <?php
 
-// TODO maybe add error codes on the inerfaces for better responses and return values
-// public const ERROR_XYZ = 1;
-
 date_default_timezone_set("UTC");
 
 abstract class UpdateRequest {
@@ -118,6 +115,7 @@ class SecretaryEnqueue extends UpdateRequest {
 }; // TODO
 
 class SecretaryEnqueuedToDequeued extends UpdateRequest {
+	# TODO dequeue is not useful, just delete the row instead of dequeue
 
 	public function __construct(int $update_id_known) {
 		parent::__construct($update_id_known);
@@ -155,27 +153,134 @@ class SecretaryInactiveToActiveInterviewee extends UpdateRequest {
 
 class SecretaryAddInterviewer extends UpdateRequest {
 
-	public function __construct(int $update_id_known) {
+	protected readonly string $iwer_name;
+	protected readonly string $iwer_table;
+	protected readonly string $iwer_image_resource_url;
+	protected readonly string $iwer_jobs;
+
+	public function __construct(
+		int $update_id_known,
+		string $iwer_name,
+		string $iwer_table,
+		string $iwer_image_resource_url,
+		string $iwer_jobs,
+	) {
 		parent::__construct($update_id_known);
+		
+		$iwer_name = $name = trim($iwer_name);
+		# TODO sanitazation and validation of "name"
+		if($name !== $iwer_name) {
+			throw new InvalidArgumentException("invalid name provided");
+		}
+
+		$this->iwer_name = $name;
+		
+		$iwer_table = $table = trim($iwer_table);
+		# TODO sanitazation and validation of "table"
+		if($table !== $iwer_table) {
+			throw new InvalidArgumentException("invalid table provided");
+		}
+
+		$this->iwer_table = $table;
+
+		$iwer_image_resource_url = $image_resource_url = trim($iwer_image_resource_url);
+		# TODO sanitazation and validation of "image_resource_url"
+		if($image_resource_url !== $iwer_image_resource_url) {
+			throw new InvalidArgumentException("invalid image provided");
+		}
+
+		$this->iwer_image_resource_url = $image_resource_url;
+
+		$iwer_jobs = $jobs = trim($iwer_jobs);
+		# TODO sanitazation and validation of "table"
+		if($jobs !== $iwer_jobs) {
+			throw new InvalidArgumentException("invalid jobs provided");
+		}
+
+		$this->iwer_jobs = $jobs;
 	}
 
 	protected function process(PDO $pdo): void {
-		throw new Exception("not implemented yet");
+		$statement = $pdo->query("INSERT
+			INTO interviewer (name, image_resource_url, table_number, jobs, active, available)
+			VALUES ('{$this->iwer_name}', '{$this->iwer_image_resource_url}', '{$this->iwer_table}', '{$this->iwer_jobs}', true, true);
+		");
+
+		if($statement === false) {
+			throw new Exception("failed to execute query");
+		}
 	}
 
-}; // TODO
+};
 
-class SecretaryRemoveInterviewer extends UpdateRequest {
+class SecretaryEditInterviewer extends SecretaryAddInterviewer {
 
-	public function __construct(int $update_id_known) {
-		parent::__construct($update_id_known);
+	private readonly int $iwer_id;
+
+	public function __construct(
+		int $update_id_known,
+		int $iwer_id,
+		string $iwer_name,
+		string $iwer_table,
+		string $iwer_image_resource_url,
+		string $iwer_jobs,
+	) {
+		parent::__construct($update_id_known, $iwer_name, $iwer_table, $iwer_image_resource_url, $iwer_jobs);
+
+		$this->iwer_id = $iwer_id;
 	}
 
 	protected function process(PDO $pdo): void {
-		throw new Exception("not implemented yet");
+		$statement = $pdo->query("UPDATE interviewer
+			SET
+				name = '{$this->iwer_name}',
+				image_resource_url = '{$this->iwer_image_resource_url}',
+				table_number = '{$this->iwer_table}',
+				jobs = '{$this->iwer_jobs}'
+			WHERE
+				id = {$this->iwer_id}
+			;
+		");
+
+		if($statement === false) {
+			throw new Exception("failed to execute query");
+		}
 	}
 
-}; // TODO
+};
+
+class SecretaryDeleteInterviewer extends UpdateRequest {
+
+	private readonly int $iwer_id;
+
+	public function __construct(int $update_id_known, int $iwer_id) {
+		parent::__construct($update_id_known);
+
+		$this->iwer_id = $iwer_id;
+	}
+
+	protected function process(PDO $pdo): void {
+		$statement = $pdo->query("DELETE
+			FROM interviewer
+			WHERE id = {$this->iwer_id}
+			AND available = true;
+		");
+		# TODO probably break it into two queries so the exception can be more specific
+
+		if($statement->rowCount() === 0) {
+			throw new Exception("interviewer still unavailable at the moment, can be deleted only when available");
+		}
+
+		# TODO delete interviews related to iwer_id with cascade?
+		# since the interviewer was available, no interviewee was unavailable due to
+		# this interviewer so cascade is just enough
+
+		if($statement === false) {
+			throw new Exception("failed to execute query");
+		}
+	}
+
+};
 
 class SystemEnqueuedToCalling extends UpdateRequest {
 
@@ -301,7 +406,7 @@ interface Database {
 	 */
 	public function update_happened_recent() : int;
 
-	public function retrieve(string ...$from_table) : array;
+	public function retrieve(string ...$from_table) : array; # TODO rework to utilize views
 }
 
 interface DatabaseAdmin {
@@ -518,12 +623,13 @@ class Postgres implements Database, DatabaseAdmin {
 				"CREATE TABLE IF NOT EXISTS interviewer /* or company */ (
 					id SERIAL PRIMARY KEY,
 
-					name VARCHAR(255) NOT NULL
-					-- logo_resource_url VARCHAR(255) NOT NULL,
-					-- table_number VARCHAR(255) NOT NULL,
+					name VARCHAR(255) NOT NULL,
+					image_resource_url VARCHAR(255) NOT NULL,
+					table_number VARCHAR(255),
+					jobs TEXT,
 
-					-- active BOOLEAN NOT NULL,
-					-- available BOOLEAN NOT NULL
+					active BOOLEAN NOT NULL,
+					available BOOLEAN NOT NULL
 				);",
 
 				"CREATE TABLE IF NOT EXISTS interview (

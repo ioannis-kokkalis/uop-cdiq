@@ -80,7 +80,7 @@ main > *:last-child {
 form {
 	display: flex;
 	flex-direction: column;
-	gap: .75rem;
+	gap: 1rem;
 
 	width: 100%;
 }
@@ -100,6 +100,10 @@ form select,
 form input::file-selector-button
 {
 	padding: .4rem .8rem;
+}
+
+form textarea {
+	padding: .5rem;
 }
 
 form input[type="file"] {
@@ -144,6 +148,22 @@ dialog button {
 	padding: .4rem .8rem;
 }
 
+#iwer_info_dialog[open] {
+	left: 1rem;
+	right: 1rem;
+
+	width: auto;
+
+	margin: auto; /* needed to prevent "main > *" rules applying*/
+
+	& > form > label { /* TODO update other CSS rules to utilize "&" nesting */
+		display: flex;
+		flex-direction: column;
+	
+		gap: .25rem;
+	}
+}
+
 hr {
 	margin: .8rem 0;
 	border: 1px solid #5f5f5f;
@@ -160,6 +180,41 @@ h1, h2, h3, h4, h5, h6 {
 
 .spacer {
 	margin: auto;
+}
+
+#iwer_checkboxes {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+
+	border: 1px solid #5f5f5f;
+
+	& > label {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+	
+		flex-grow: 1;
+	
+		gap: .6rem;
+	
+		padding: 1rem .5rem;
+
+		&:nth-child(odd) {
+			background-color: #fcfcfc;
+			/* background-color: red; */
+		}
+
+		&:nth-child(even) {
+			background-color: #ffffff;
+		}
+
+		& > img {
+			aspect-ratio: 1 / 1;
+			object-fit: cover;
+			width: clamp(0px, 15dvw, 96px);
+		}
+	}
 }
 
 @media screen and (min-width: 501px) {

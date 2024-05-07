@@ -49,7 +49,7 @@ $parameters = [
 						return [];
 					}
 					else {
-						return $db->retrieve("interviewee"); # TODO update when retrive gets updates to work better with db views?
+						return $db->retrieve("interviewee", "interviewer");
 					}
 				},
 				'gatekeeper' =>	function () use ($db) : array {
@@ -107,6 +107,40 @@ $parameters = [
 						$update_request = new SecretaryDeleteInterviewee(
 							$update_known,
 							intval($_POST['iwee_select'])
+						);
+					}
+					else if(
+						isset($_POST['iwer_info_dialog_confirm'])
+						&& isset($_POST['iwer_info_dialog_id']) && $_POST['iwer_info_dialog_id'] === 'null'
+					) {
+						$update_request = new SecretaryAddInterviewer(
+							$update_known,
+							$_POST['iwer_info_dialog_name'],
+							$_POST['iwer_info_dialog_table'],
+							'/resources/images/placeholder_interviewer.svg', # TODO include from $_FILES
+							$_POST['iwer_info_dialog_jobs'],
+						);
+					}
+					else if(
+						isset($_POST['iwer_info_dialog_confirm'])
+						&& isset($_POST['iwer_info_dialog_id']) && $_POST['iwer_info_dialog_id'] !== 'null'
+					) {
+						$update_request = new SecretaryEditInterviewer(
+							$update_known,
+							intval($_POST['iwer_info_dialog_id']),
+							$_POST['iwer_info_dialog_name'],
+							$_POST['iwer_info_dialog_table'],
+							'/resources/images/placeholder_interviewer.svg', # TODO include from $_FILES
+							$_POST['iwer_info_dialog_jobs'],
+						);
+					}
+					else if(
+						isset($_POST['iwer_info_dialog_delete'])
+						&& isset($_POST['iwer_info_dialog_id']) && $_POST['iwer_info_dialog_id'] !== 'null'
+					) {
+						$update_request = new SecretaryDeleteInterviewer(
+							$update_known,
+							intval($_POST['iwer_info_dialog_id'])
 						);
 					}
 
