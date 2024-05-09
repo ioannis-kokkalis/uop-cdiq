@@ -1,5 +1,7 @@
 <?php
 
+# TODO we need HTTPS for the password sending
+
 require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
 
 $a = new AssemblerOperate('Authorization Required');
