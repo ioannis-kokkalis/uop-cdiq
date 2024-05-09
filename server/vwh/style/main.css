@@ -202,11 +202,14 @@ h1, h2, h3, h4, h5, h6 {
 
 		&:nth-child(odd) {
 			background-color: #fcfcfc;
-			/* background-color: red; */
 		}
 
 		&:nth-child(even) {
 			background-color: #ffffff;
+		}
+
+		&:has(> input[style="display: none;"]) {
+			padding: 1rem;
 		}
 
 		& > img {
