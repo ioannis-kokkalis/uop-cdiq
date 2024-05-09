@@ -33,8 +33,9 @@ iwee_option_empty.text = 'Select an Interviewee';
 iwee_option_empty.selected = true;
 iwee_option_empty.value = null;
 
-const interviewees_array = [];
+const interviewees = {};
 const interviewers = {};
+let interviews;
 
 // ...
 
@@ -99,7 +100,39 @@ iwer_filter.addEventListener('input', function () {
 });
 
 iwee_select.addEventListener('change', function () {
-	display(this.options[this.selectedIndex] !== iwee_option_empty, [iwee_buttons]);
+	
+	let iwer_ids = Object.keys(interviewers);
+
+	iwer_ids.forEach(id => {
+		let iwer_checkbox = interviewers[id]['element_input'];
+		iwer_checkbox.disabled = false;
+		iwer_checkbox.checked = false;
+	});
+
+	if(iwee_option_empty.selected === false) {
+		interviews.forEach(iw => {
+			let iwer = interviewers[iw['id_interviewer']];
+			let iwee = interviewees[iw['id_interviewee']];
+	
+			if(iwee['element_option'].selected === false) {
+				return;
+			}
+	
+			iwer['element_input'].checked = true;
+	
+			if(iw['state_'] !== 'ENQUEUED') {
+				iwer['element_input'].disabled = true;
+			}
+		});
+	}
+
+	display(
+		iwee_option_empty.selected === false,
+		[].concat(
+			iwee_buttons,
+			iwer_ids.map(id => interviewers[id]['element_input'])
+		)
+	);
 });
 
 iwer_button_add.addEventListener('click', function () {
@@ -187,7 +220,7 @@ form.addEventListener("submit", function (event) {
 			}
 		}
 		else { // if(option_selected !== iwee_option_empty) => some interviewee
-			let interviewee_selected = interviewees_array[option_selected.value];
+			let interviewee_selected = interviewees[option_selected.value];
 
 			if(button === button_update) {
 				ret_value = 'UPDATING';
@@ -246,37 +279,52 @@ iwer_form.addEventListener("submit", function(event) {
 // ...
 
 function update(data) {
-
-	// TODO MUST remember selection do not remove all and recreate them
-	// otherwise on each update selection is lost
-	// based on data: update existing ones, remove non present, add new ones
-
-	for (i = iwee_select.length - 1; i >= 0; i--) {
-		if (iwee_select[i] === iwee_option_empty) {
-			continue;
-		}
-		iwee_select.remove(i);
-	}
 	
+	let interviewee_ids_to_delete = Object.keys(interviewees);
+
 	data['interviewee'].forEach(function (iwee_row) { 
 
-		let interviewee = interviewees_array[iwee_row['id']] = {
-			'id': iwee_row['id'],
-			'email': iwee_row['email'],
-			'active': iwee_row['active'],
-			'available': iwee_row['available'],
-			'element_option': document.createElement('option')
-		};
-		
-		interviewee['element_option'].value = iwee_row['id'];
-		interviewee['element_option'].text = iwee_row['id'] + ' | ' + interviewee['email'];
-		
-		iwee_select.appendChild(interviewee['element_option']);
+		let interviewee = interviewees[iwee_row['id']];
 
+		if(interviewee === undefined) {
+			interviewee =
+			interviewees[iwee_row['id']] = {
+				'id': iwee_row['id'],
+				'email': iwee_row['email'],
+				'element_option': document.createElement('option')
+			};
+
+			interviewee['element_option'].value = interviewee['id'];
+			interviewee['element_option'].text = interviewee['id'] + ' | ' + interviewee['email'];
+
+			iwee_select.appendChild(interviewee['element_option']);
+
+			if(iwee_option_empty.selected === true) {
+				iwee_filter.dispatchEvent(new Event('input'));
+			}
+		}
+		else {
+			interviewee_ids_to_delete.splice(interviewee_ids_to_delete.indexOf(interviewee['id'].toString()), 1);
+		}
+
+		interviewee['active'] = iwee_row['active'];
+		interviewee['available'] = iwee_row['available'];
 	});
 
-	iwee_select.dispatchEvent(new Event('change'));
-	iwee_filter.dispatchEvent(new Event('input'));
+	interviewee_ids_to_delete.forEach(function (id) {
+		if(interviewees[id]['element_option'].selected === true) {
+			iwee_option_empty.selected = true;
+			iwee_select.dispatchEvent(new Event('change'));
+
+			iwee_select.removeChild(interviewees[id]['element_option']);
+			
+			iwee_filter.dispatchEvent(new Event('input'));
+		}
+		else {
+			iwee_select.removeChild(interviewees[id]['element_option']);
+		}
+		delete interviewees[id];
+	});
 
 	// ===
 
@@ -324,6 +372,7 @@ function update(data) {
 					display(true, [iwer_info_dialog_delete]);
 				}
 			});
+			display(iwee_option_empty.selected === false, [interviewer['element_input']]);
 
 			iwer_checkboxes.appendChild(interviewer['element_label']);
 		}
@@ -353,4 +402,22 @@ function update(data) {
 	});
 
 	// ===
+
+	interviews = data['interview'];
+
+	if(iwee_option_empty.selected === false) {
+		interviews.forEach(iw => {
+			let iwee = interviewees[iw['id_interviewee']];
+			
+			if(iwee['element_option'].selected === false) {
+				return;
+			}
+			
+			if(iw['state_'] !== 'ENQUEUED') {
+				let iwer = interviewers[iw['id_interviewer']];
+				iwer['element_input'].disabled = true;
+				iwer['element_input'].checked = true;
+			}
+		});
+	}
 }
