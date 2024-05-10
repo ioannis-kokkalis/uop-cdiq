@@ -307,18 +307,6 @@ class SecretaryDeleteInterviewer extends UpdateRequest {
 
 };
 
-class SystemEnqueuedToCalling extends UpdateRequest {
-
-	public function __construct(int $update_id_known) {
-		parent::__construct($update_id_known);
-	}
-
-	protected function process(PDO $pdo): void {
-		throw new Exception("not implemented yet");
-	}
-
-}; // TODO // checks and updates if needed // maybe do this after any update
-
 class SystemCallingToDecision extends UpdateRequest {
 
 	public function __construct(int $update_id_known) {
@@ -535,14 +523,8 @@ class Postgres implements Database, DatabaseAdmin {
 					$updated_or_reason = $update_request->dispatch($this->pdo);
 
 					if($updated_or_reason === true) {
-						# $this->update_handle(Update::SYSTEM_ENQUEUED_TO_CALLING, new UpdateArguments());
-						# TODO do it here dont call update_handle again for simplicity
-						# probably fix availabilities too
 
-						if($this->pdo->query("INSERT INTO updates (happened) VALUES (NOW());") === false) {
-							throw new UpdateHandleUnexpectedException("unable to insert update timestamp");
-						}
-						# TODO recreate it with triggers in the database when one of the tables is affected?
+						$this->update_handled_routine();
 					}
 					else {
 						throw new UpdateHandleExpectedException($updated_or_reason);
@@ -570,6 +552,104 @@ class Postgres implements Database, DatabaseAdmin {
 				return $result;
 			}
 		);
+	}
+
+	private function update_handled_routine() {
+
+		# TODO (haha) can be more efficient if we do only the needed avaialability fixes after each update request, more complex since the logic is spread out then
+
+		$this->pdo->query("UPDATE interviewee
+			SET available = (
+				(
+					NOT EXISTS (
+						SELECT id FROM interview
+						WHERE interview.id_interviewee = interviewee.id
+						AND state_ NOT IN ('ENQUEUED', 'COMPLETED')
+						LIMIT 1
+					)
+				)
+				AND
+				interviewee.active
+			)
+		;");
+
+		$this->pdo->query("UPDATE interviewer
+			SET available = (
+				(
+					NOT EXISTS (
+						SELECT id FROM interview
+						WHERE interview.id_interviewer = interviewer.id
+						AND state_ NOT IN ('ENQUEUED', 'COMPLETED')
+						LIMIT 1
+					)
+				)
+				AND
+				interviewer.active
+			)
+		;");
+
+		# ---
+		# ENQUEUED interviews to CALLING with respect order via ID
+
+		$query_next_interview_to_calling = "SELECT
+			interview.id as id_iw,
+			interview.id_interviewee as id_iwee,
+			interview.id_interviewer as id_iwer
+
+			FROM interview, interviewee, interviewer
+			WHERE	interviewee.id = interview.id_interviewee
+			AND		interviewer.id = interview.id_interviewer
+
+			AND interview.state_ = 'ENQUEUED'
+			AND interviewee.available = TRUE
+			AND interviewer.available = TRUE
+
+			ORDER BY id_iw ASC
+			LIMIT 1;
+		";
+
+		do {
+			$statement = $this->pdo->query($query_next_interview_to_calling);
+
+			if($statement === false) {
+				throw new Exception("failed to execute query");
+			}
+			
+			if ($statement->rowCount() === 1) {
+
+				$interview = $statement->fetch();
+
+				if($this->pdo->query("UPDATE interview
+					SET state_ = 'CALLING', state_timestamp = CURRENT_TIMESTAMP
+					WHERE id = {$interview['id_iw']};
+				") === false) {
+					throw new Exception("failed to execute query");
+				}
+
+				if($this->pdo->query("UPDATE interviewee
+					SET available = FALSE
+					WHERE id = {$interview['id_iwee']};
+				") === false) {
+					throw new Exception("failed to execute query");
+				}
+
+				if($this->pdo->query("UPDATE interviewer
+					SET available = FALSE
+					WHERE id = {$interview['id_iwer']};
+				") === false) {
+					throw new Exception("failed to execute query");
+				}
+
+			}
+
+		} while($statement->rowCount() === 1);
+
+		# ---
+
+		if($this->pdo->query("INSERT INTO updates (happened) VALUES (CURRENT_TIMESTAMP);") === false) {
+			throw new UpdateHandleUnexpectedException("unable to insert update timestamp");
+		}
+		# TODO recreate it with triggers in the database when one of the tables is affected?
 	}
 
 	public function update_happened_recent() : int {
