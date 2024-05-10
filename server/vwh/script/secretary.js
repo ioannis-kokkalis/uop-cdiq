@@ -280,6 +280,10 @@ iwer_form.addEventListener("submit", function(event) {
 
 function update(data) {
 	
+	interviews = data['interview'];
+
+	// ---
+
 	let interviewee_ids_to_delete = Object.keys(interviewees);
 
 	data['interviewee'].forEach(function (iwee_row) { 
@@ -402,8 +406,6 @@ function update(data) {
 	});
 
 	// ===
-
-	interviews = data['interview'];
 
 	if(iwee_option_empty.selected === false) {
 		interviews.forEach(iw => {
