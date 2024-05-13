@@ -55,6 +55,7 @@ function short_polling(interval_in_seconds, for_page, callback_with_JSON_parsed_
 						parsed_data = JSON.parse(r.responseText);
 						callback_with_JSON_parsed_data(parsed_data);
 						update_id = parsed_data['update']; // keep after, so form submissions sync with UI etc
+						// TODO maybe do something with a "mutex"?
 					}
 					else {
 						console.error('Data retrieval failed with status:', r.status);

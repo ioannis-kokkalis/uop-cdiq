@@ -10,6 +10,11 @@ $a->operator_ensure(Operator::Secretary);
 
 $a->body_main = function() { ?>
 
+	<!-- TODO dialog with HELP information like
+		to ensure order of interviews
+		submit one at a time
+	-->
+
 	<form id="form"> <!-- submitting with JavaScript XMLHttpRequest -->
 		<!--  TODO (haha) maybe consider static form submission in case JS is disabled -->
 
@@ -101,6 +106,7 @@ $a->assemble();
 
 <script src="/script/utilities.js"></script>
 <script src="/script/short_polling.js"></script>
+<script src="/script/submit.js"></script>
 <script src="/script/secretary.js"></script>
 <script>
 	short_polling(2 /* seconds */, /* for */ 'secretary', /* to retrieve */ (data) => {

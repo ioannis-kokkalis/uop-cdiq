@@ -59,7 +59,7 @@ $parameters = [
 						return [];
 					}
 					else {
-						return []; # TODO update when retrive gets updates to work better with db views?
+						return $db->retrieve_gatekeeper_view();
 					}
 				},
 			];
@@ -151,6 +151,35 @@ $parameters = [
 							$update_known,
 							intval($_POST['iwee_select']),
 							...(isset($_POST['interviewers']) ? $_POST['interviewers'] : [])
+						);
+					}
+
+					# ---
+
+					else if(
+						isset($_POST['button_to_happening'])
+						&& isset($_POST['input_interview_id'])
+					) {
+						$update_request = new GatekeeperCallingOrDecisionToHappening(
+							$update_known,
+							intval($_POST['input_interview_id'])
+						);
+					}
+					else if(
+						isset($_POST['button_to_completed'])
+						&& isset($_POST['input_interview_id'])
+					) {
+						$update_request = new GatekeeperHappeningToCompleted(
+							$update_known,
+							intval($_POST['input_interview_id'])
+						);
+					}
+					
+					/* // TODO make it trigger from routine in the system */
+					else if(isset($_POST['tcdc'])) {
+						$update_request = new SystemCallingToDecision(
+							$update_known,
+							3 * 60 /* seconds */
 						);
 					}
 
