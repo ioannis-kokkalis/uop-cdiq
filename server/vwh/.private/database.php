@@ -309,15 +309,30 @@ class SecretaryDeleteInterviewer extends UpdateRequest {
 
 class SystemCallingToDecision extends UpdateRequest {
 
-	public function __construct(int $update_id_known) {
+	private readonly int $after_seconds;
+
+	public function __construct(int $update_id_known, int $after_seconds) {
 		parent::__construct($update_id_known);
+
+		$this->after_seconds = $after_seconds;
 	}
 
 	protected function process(PDO $pdo): void {
-		throw new Exception("not implemented yet");
+		$statement = $pdo->query("UPDATE interview
+			SET
+				state_ = 'DECISION',
+				state_timestamp = CURRENT_TIMESTAMP
+			WHERE
+				state_ = 'CALLING' AND
+				CURRENT_TIMESTAMP - state_timestamp > INTERVAL '{$this->after_seconds} seconds';
+		");
+
+		if($statement === false) {
+			throw new Exception("failed to execute query");
+		}
 	}
 
-}; // TODO // checks and updates if needed
+};
 
 class GatekeeperActiveToInactiveInterviewer extends UpdateRequest {
 
@@ -343,31 +358,35 @@ class GatekeeperInactiveToActiveInterviewer extends UpdateRequest {
 
 }; // TODO
 
-class GatekeeperCallingToHappening extends UpdateRequest {
+class GatekeeperCallingOrDecisionToHappening extends UpdateRequest {
 
-	public function __construct(int $update_id_known) {
+	private readonly int $interview_id;
+
+	public function __construct(int $update_id_known, int $interview_id) {
 		parent::__construct($update_id_known);
+
+		$this->interview_id = $interview_id;
 	}
 
 	protected function process(PDO $pdo): void {
-		throw new Exception("not implemented yet");
+		$statement = $pdo->query("UPDATE interview
+			SET
+				state_ = 'HAPPENING',
+				state_timestamp = CURRENT_TIMESTAMP
+			WHERE
+				interview.id = {$this->interview_id}
+				AND state_ in ('CALLING', 'DECISION')
+				;
+		");
+
+		if($statement === false) {
+			throw new Exception("failed to execute query");
+		}
 	}
 
-}; // TODO
+};
 
 class GatekeeperCallingToDequeued extends UpdateRequest {
-
-	public function __construct(int $update_id_known) {
-		parent::__construct($update_id_known);
-	}
-
-	protected function process(PDO $pdo): void {
-		throw new Exception("not implemented yet");
-	}
-
-}; // TODO
-
-class GatekeeperDecisionToHappening extends UpdateRequest {
 
 	public function __construct(int $update_id_known) {
 		parent::__construct($update_id_known);
@@ -391,7 +410,7 @@ class GatekeeperDecisionToDequeued extends UpdateRequest {
 
 }; // TODO
 
-class GatekeeperHappeningToCompleted extends UpdateRequest {
+class GatekeeperCompletedToDequeued extends UpdateRequest {
 
 	public function __construct(int $update_id_known) {
 		parent::__construct($update_id_known);
@@ -401,7 +420,35 @@ class GatekeeperHappeningToCompleted extends UpdateRequest {
 		throw new Exception("not implemented yet");
 	}
 
-}; // + GATEKEEPER_HAPPENING_TO_COMPLETED_AND_ACTIVE_TO_INACTIVE_INTERVIEWER; // unecessary since you can active/inactive before completion if you want?
+}; // TODO maybe? all ToDequeue in one? like abort, so it turns back to ENQUEUED
+
+class GatekeeperHappeningToCompleted extends UpdateRequest {
+
+	private readonly int $interview_id;
+
+	public function __construct(int $update_id_known, int $interview_id) {
+		parent::__construct($update_id_known);
+
+		$this->interview_id = $interview_id;
+	}
+
+	protected function process(PDO $pdo): void {
+		$statement = $pdo->query("UPDATE interview
+			SET
+				state_ = 'COMPLETED',
+				state_timestamp = CURRENT_TIMESTAMP
+			WHERE
+				interview.id = {$this->interview_id}
+				AND state_ = 'HAPPENING'
+				;
+		");
+
+		if($statement === false) {
+			throw new Exception("failed to execute query");
+		}
+	}
+
+};
 
 interface Database {
 	/**
@@ -420,6 +467,8 @@ interface Database {
 	public function update_happened_recent() : int;
 
 	public function retrieve(string ...$from_table) : array; # TODO rework to utilize views
+	
+	public function retrieve_gatekeeper_view() : array;
 }
 
 interface DatabaseAdmin {
@@ -683,6 +732,58 @@ class Postgres implements Database, DatabaseAdmin {
 		});
 	}
 
+	public function retrieve_gatekeeper_view() : array {
+		return $this->connect(true, function () {
+			try {
+				$this->pdo->beginTransaction();
+
+				$statement = $this->pdo->query("SELECT * FROM view_gatekeeper_iwers;");
+
+				if($statement === false) {
+					throw new Exception('failed execute to query');
+				}
+
+				$retrieved['interviewers'] = $statement->fetchAll();
+				
+				# ---
+
+				$statement = $this->pdo->query("SELECT * FROM view_gatekeeper_iwees;");
+
+				if($statement === false) {
+					throw new Exception('failed execute to query');
+				}
+
+				$retrieved['interviewees'] = $statement->fetchAll();
+				
+				# ---
+
+				$statement = $this->pdo->query("SELECT * FROM view_gatekeeper_iws;");
+
+				if($statement === false) {
+					throw new Exception('failed execute to query');
+				}
+
+				$retrieved['interviews'] = $statement->fetchAll(); 
+
+				# ---
+
+				$statement = $this->pdo->query("SELECT * FROM update_recent_id;");
+				$retrieved['update'] = $statement === false ? 0 : $statement->fetch()['recent'];
+				
+				$this->pdo->commit();
+
+				return $retrieved;
+			}
+			catch (Throwable $th) {
+				if($this->pdo->inTransaction()) {
+					$this->pdo->rollBack();
+				}
+			}
+			
+			return [];
+		});
+	}
+
 	// ||
 	// \/ methods of DatabaseAdmin interface
 
@@ -765,6 +866,33 @@ class Postgres implements Database, DatabaseAdmin {
 				# ---
 
 				"CREATE VIEW update_recent_id AS SELECT COALESCE(MAX(id),0) AS recent FROM updates;",
+
+				"CREATE VIEW view_gatekeeper_iwers AS
+					SELECT
+						id,
+						name,
+						image_resource_url,
+						table_number,
+						active,
+						available
+					FROM interviewer
+					ORDER BY name;
+				",
+
+				"CREATE VIEW view_gatekeeper_iwees AS
+					SELECT
+						id,
+						email
+					FROM interviewee
+					ORDER BY id;
+				",
+
+				"CREATE VIEW view_gatekeeper_iws AS
+					SELECT DISTINCT ON (i.id_interviewer) i.*
+					FROM interview i
+					WHERE i.state_ in ('CALLING', 'DECISION', 'HAPPENING')
+					ORDER BY i.id_interviewer ASC, i.state_timestamp DESC;
+				",
 
 				// // keep it in case of need can be removed in later comments
 				// "CREATE VIEW update_recent_ms AS

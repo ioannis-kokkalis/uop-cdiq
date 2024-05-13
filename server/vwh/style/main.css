@@ -10,6 +10,11 @@ mobile first with small fixes for larger screens
 
 /* --- */
 
+*, *::before, *::after {
+	box-sizing: border-box;
+	font-family: local-font-family;
+}
+
 body, header, footer, main, nav, hr, p {
 	margin: 0;
 }
@@ -17,7 +22,6 @@ body, header, footer, main, nav, hr, p {
 /* --- */
 
 html {
-	font-family: local-font-family;
 	word-break: break-word;
 }
 
@@ -26,12 +30,17 @@ body {
 	flex-direction: column;
 	align-items: center;
 
-	box-sizing: border-box;
 	height: auto;
 	min-height: 100dvh;
 	width: 100%;
 
 	padding: 1rem;
+}
+
+hr {
+	margin: .8rem 0;
+	border: 1px solid #5f5f5f;
+	border-radius: 1rem;
 }
 
 header, footer, main, nav, hr {
@@ -57,24 +66,13 @@ nav a {
 main {
 	display: flex;
 	flex-direction: column;
+	
 	align-items: center;
 	justify-content: center;
 	
+	gap: 1rem;
+
 	padding: .75rem 0px;
-}
-
-main > * {
-	margin-top: .75rem;
-}
-
-main > *:first-child {
-	margin-top: 0;
-	padding-top: 0;
-}
-
-main > *:last-child {
-	margin-bottom: 0;
-	padding-bottom: 0;
 }
 
 form {
@@ -154,8 +152,6 @@ dialog button {
 
 	width: auto;
 
-	margin: auto; /* needed to prevent "main > *" rules applying*/
-
 	& > form > label { /* TODO update other CSS rules to utilize "&" nesting */
 		display: flex;
 		flex-direction: column;
@@ -164,10 +160,11 @@ dialog button {
 	}
 }
 
-hr {
-	margin: .8rem 0;
-	border: 1px solid #5f5f5f;
-	border-radius: 1rem;
+#dialog_action[open] {
+
+	& hr {
+		margin: .25rem 0;
+	}
 }
 
 /* --- */
@@ -220,6 +217,81 @@ h1, h2, h3, h4, h5, h6 {
 	}
 }
 
+#container_interviewers {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: baseline;
+
+	width: 100%;
+
+	gap: 1rem;
+
+	& > .interviewer {
+		display: flex;
+		flex-direction: column;
+
+		width: 100%;
+
+		border: 1px solid #5f5f5f;
+
+		& > .info {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+
+			flex-grow: 1;
+	
+			gap: .6rem;
+		
+			padding: 1rem;
+
+			& > .image {
+				aspect-ratio: 1 / 1;
+				object-fit: cover;
+				width: clamp(0px, 15dvw, 96px);
+			}
+
+			& > .text {
+				line-height: 1.5rem;
+			}
+		}
+
+		& > .status_indicator {
+			width: 100%;
+			height: 1rem;
+			background-color: rgb(60, 60, 60);
+		}
+
+		& > .status_indicator--available {
+			background-color: rgb(0, 169, 175);
+		}
+
+		& > .status_indicator--calling {
+			background-color: rgb(0, 183, 46);
+		}
+
+		& > .status_indicator--decision {
+			background-color: rgb(220, 117, 0);
+		}
+
+		& > .status_indicator--happening {
+			background-color: rgb(202, 24, 1);
+		}
+	
+		& > .status_information {
+			text-align: center;
+			padding: 0.5rem;
+			line-height: 1.25rem;
+		}
+	}
+
+	& > .interviewer:hover {
+		cursor: pointer;
+	}
+}
+
 @media screen and (min-width: 501px) {
 	main {
 		max-width: 650px;
@@ -227,5 +299,15 @@ h1, h2, h3, h4, h5, h6 {
 	
 	dialog {
 		max-width: 450px;
+	}
+}
+
+@media screen and (min-width: calc(280px * 2 + 2.5rem)) {
+	main:has(#container_interviewers) {
+		max-width: 100%;
+		
+		& > #container_interviewers > .interviewer {
+			max-width: 280px;
+		}
 	}
 }
