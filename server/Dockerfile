@@ -5,3 +5,6 @@ RUN a2enmod rewrite
 RUN apt-get update \
     && apt-get install -y libpq-dev \
     && docker-php-ext-install pdo pdo_pgsql
+
+RUN groupadd -r non_sudo_group && useradd -r -g non_sudo_group non_sudo_user
+USER non_sudo_user
