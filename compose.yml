@@ -7,7 +7,6 @@ services:
     environment:
       POSTGRES_USER: ${DBMS_USERNAME}
       POSTGRES_PASSWORD: ${DBMS_PASSWORD}
-      POSTGRES_DB: ${DBMS_DATABASE}
     volumes:
       - ./dbms/vlpd:/var/lib/postgresql/data
   
