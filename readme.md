@@ -18,3 +18,7 @@ and now (from inside the server container) run:
 ````
 php .private/_admin/dbms/create.php
 ````
+finally add operators of type 'secretary' and 'gatekeeper' via the following:
+```
+php .private/_admin/operators.php
+```
