@@ -1,0 +1,26 @@
+<VirtualHost *:80>
+        ServerName ${SERVER_NAME}
+        ServerAdmin webmaster@localhost
+
+        DocumentRoot /var/www/html
+
+        RedirectMatch (.*) https://${SERVER_NAME}$1
+
+        ErrorLog ${APACHE_LOG_DIR}/error.log
+        CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+
+<VirtualHost *:443>
+        ServerName ${SERVER_NAME}
+        ServerAdmin webmaster@localhost
+
+        DocumentRoot /var/www/html
+
+        ErrorLog ${APACHE_LOG_DIR}/error.log
+        CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+        SSLEngine on
+
+	SSLCertificateFile ${SERVER_SSL_CERT_FILE}
+        SSLCertificateKeyFile ${SERVER_SSL_PKEY_FILE}
+</VirtualHost>
