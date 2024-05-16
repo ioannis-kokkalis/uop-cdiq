@@ -1,24 +1,27 @@
-# As Soon As Possible
+# Guide to Run
 
-Make sure to edit the placeholders at ```.env``` file.
+Edit the values of the placeholders at ```.env``` file.
 
-# Docker Compose
+Move your **certificate** and **private key** inside ```server/``` named ```cert``` and ```pkey``` respectively.
+
+Execute the following commands inside base directory of repository:
 
 ````
 docker compose --build -d
 ````
 
-# Create the Database
-
-After both the server and database containers finish initializing, run:
 ````
 docker exec -it <server-container> bash
 ````
-and now (from inside the server container) run:
+
 ````
 php .private/_admin/dbms/create.php
 ````
-finally add operators of type 'secretary' and 'gatekeeper' via the following:
+
 ```
 php .private/_admin/operators.php
 ```
+
+# Bla bla bla
+
+...

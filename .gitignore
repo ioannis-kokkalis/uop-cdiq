@@ -1,2 +1,4 @@
-# dbms persistent data
-vlpd
+/dbms/vlpd
+
+/server/cert
+/server/pkey
