@@ -13,8 +13,8 @@ $a->body_main = function() { ?>
 	
 	<dialog id="dialog_action">
 		<form id="dialog_action_form" method="dialog">
-			<input id="input_interview_id" name="input_interview_id" type="hidden" value="null">
-			<input id="input_interviewer_id" name="input_interviewer_id" type="hidden" value="null">
+			<input id="input_interview_id" name="input_interview_id" type="text" value="null" hidden>
+			<input id="input_interviewer_id" name="input_interviewer_id" type="text" value="null" hidden>
 
 			<button id="button_to_happening" name="button_to_happening" type="sumbit">Happening</button>
 			<button id="button_to_completed" name="button_to_completed" type="sumbit">Complete</button>

@@ -192,6 +192,15 @@ $parameters = [
 							intval($_POST['input_interview_id'])
 						);
 					}
+					else if(
+						isset($_POST['button_active_inactive'])
+						&& isset($_POST['input_interviewer_id'])
+					) {
+						$update_request = new GatekeeperActiveInactiveFlipInterviewer(
+							$update_known,
+							intval($_POST['input_interviewer_id'])
+						);
+					}
 
 					return $update_request === null ? 'unknown request' : $update_request;
 				}
