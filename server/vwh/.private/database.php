@@ -390,41 +390,34 @@ class GatekeeperCallingOrDecisionToHappening extends UpdateRequest {
 
 };
 
-class GatekeeperCallingToDequeued extends UpdateRequest {
+class GatekeeperCallingOrDecisionOrHappeningToDequeued extends UpdateRequest {
 
-	public function __construct(int $update_id_known) {
+	private readonly int $interview_id;
+
+	public function __construct(int $update_id_known, int $interview_id) {
 		parent::__construct($update_id_known);
+
+		$this->interview_id = $interview_id;
 	}
 
 	protected function process(PDO $pdo): void {
-		throw new Exception("not implemented yet");
+		$statement = $pdo->query("DELETE
+			FROM interview
+			WHERE id = {$this->interview_id}
+			AND state_ in ('CALLING','DECISION','HAPPENING');
+		");
+
+		// TODO may confuse in practice, will see, same in other classes
+		// if($statement->rowCount() === 0) {
+		// 	throw new Exception("has already changed state");
+		// }
+
+		if($statement === false) {
+			throw new Exception("failed to execute query");
+		}
 	}
 
-}; // TODO
-
-class GatekeeperDecisionToDequeued extends UpdateRequest {
-
-	public function __construct(int $update_id_known) {
-		parent::__construct($update_id_known);
-	}
-
-	protected function process(PDO $pdo): void {
-		throw new Exception("not implemented yet");
-	}
-
-}; // TODO
-
-class GatekeeperCompletedToDequeued extends UpdateRequest {
-
-	public function __construct(int $update_id_known) {
-		parent::__construct($update_id_known);
-	}
-
-	protected function process(PDO $pdo): void {
-		throw new Exception("not implemented yet");
-	}
-
-}; // TODO maybe? all ToDequeue in one? like abort, so it turns back to ENQUEUED
+};
 
 class GatekeeperHappeningToCompleted extends UpdateRequest {
 

@@ -346,6 +346,12 @@ function update(data) {
 		interviewer['element_p'].style.lineHeight = '1.5rem';
 		interviewer['element_p'].innerHTML =
 			interviewer['name'] + "<br>Table: " + interviewer['table'];
+		
+		// was moved from enqueued, but got dequeued
+		if(interviewer['element_input'].disabled === true) {
+			interviewer['element_input'].disabled = false;
+			interviewer['element_input'].checked = false;
+		}
 	});
 
 	interviewer_ids_to_delete.forEach(function (id) {
