@@ -7,7 +7,7 @@ Move your **certificate** and **private key** inside ```server/``` named ```cert
 Execute the following commands inside base directory of repository:
 
 ````
-docker compose --build -d
+docker compose up -d --build
 ````
 
 ````
