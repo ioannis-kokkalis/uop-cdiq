@@ -26,11 +26,6 @@ $a->body_main = function() { ?>
 		</form>
 	</dialog>
 
-	<form id="form_tcdc">
-		<button type="submit" id="tcdc" name="tcdc">Trigger Calling to Decision Check</button>
-	</form>
-	<!-- TODO button to trigger CALLING to DECISION updaterequest -->
-
 <?php };
 
 $a->assemble();
