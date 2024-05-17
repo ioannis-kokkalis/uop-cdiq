@@ -845,8 +845,8 @@ class Postgres implements Database, DatabaseAdmin {
 				"CREATE TABLE IF NOT EXISTS interview (
 					id SERIAL PRIMARY KEY,
 
-					id_interviewer INTEGER NOT NULL REFERENCES interviewer(id),
-					id_interviewee INTEGER NOT NULL REFERENCES interviewee(id),
+					id_interviewer INTEGER NOT NULL REFERENCES interviewer(id) ON DELETE CASCADE,
+					id_interviewee INTEGER NOT NULL REFERENCES interviewee(id) ON DELETE CASCADE,
 					CONSTRAINT pair_interviewer_interviewee UNIQUE (id_interviewer, id_interviewee),
 
 					state_ VARCHAR(255) CHECK (state_ IN (
