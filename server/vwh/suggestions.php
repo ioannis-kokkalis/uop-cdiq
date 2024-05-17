@@ -82,7 +82,7 @@ else {
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
 
-$a = new Assembler('Suggestions for Interviews');
+$a = new Assembler('Suggestions');
 
 $a->body_main = function() use (
 	$showInitial,
@@ -93,7 +93,7 @@ $a->body_main = function() use (
 ) {
 	if($showInitial) {
 		?>
-		<p>You have the ability to upload your resume and we will suggest what companies are more likely suited for your needs, so you can apply more precisely for interviews.</p>
+		<p>You have the ability to upload your resume and we will suggest what interviewers (companies) are more likely suited for your needs, so you can apply more precisely for interviews.</p>
 		<form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 			<fieldset>
 				<legend>Conitnue as</legend>
@@ -111,7 +111,7 @@ $a->body_main = function() use (
 	}
 	else if($showFileUploadForm) {
 		?>
-		<p>Upload your resume (as .pdf or .docx) and we will suggest what companies are more likely suited for your needs.</p>
+		<p>Upload your resume (as .pdf or .docx) and we will suggest what interviewers (companies) are more likely suited for your needs.</p>
 		<form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>" enctype="multipart/form-data">
 			<fieldset>
 				<legend>Your Resume</legend>

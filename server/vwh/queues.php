@@ -2,7 +2,7 @@
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
 
-$a = new Assembler('Interview Queues Currently');
+$a = new Assembler('Interviews');
 
 $a->body_main = function() { ?>
 

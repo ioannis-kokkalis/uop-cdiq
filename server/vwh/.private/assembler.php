@@ -36,6 +36,9 @@ class Assembler {
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<link rel="stylesheet" href="<?= $this->head_stylesheet->value ?>">
+		<?php if((mt_rand() / mt_getrandmax()) >  0.99) {
+			?> <link rel="stylesheet" href="/style/color-shiny.css"> <?php
+		} ?>
 		<title><?= $this->head_title ?></title>
 		<?php
 	}
@@ -48,7 +51,11 @@ class Assembler {
 
 			<hr>
 
-			<h1 align="center"><?= $this->body_header_title ?></h1>
+			<div class="header_title_container">
+				<div class="polygon polygon_accent"></div>
+				<div class="polygon polygon_primary"></div>
+				<h1 class="text"><?= $this->body_header_title ?></h1>
+			</div>
 		</header>
 		
 		<hr>
@@ -62,8 +69,8 @@ class Assembler {
 		<hr>
 
 		<footer>
-			<p align="center">
-				<a href="https://www.uop.gr/">University of the Peloponnese</a> © Career Day Interviews Queuing 2024
+			<p style="text-align: center;">
+				<a href="https://www.uop.gr/">University of the Peloponnese</a> © Career Day 2024 Interviews
 			</p>
 		</footer>
 
@@ -73,7 +80,7 @@ class Assembler {
 	protected function body_header_nav() : void {
 		?>
 		<a href="/">Home</a>
-		<a href="/queues.php">Queues</a>
+		<a href="/queues.php">Interviews</a>
 		<a href="/suggestions.php">Suggestions</a>
 		<?php
 	} 
