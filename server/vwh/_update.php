@@ -183,6 +183,15 @@ $parameters = [
 							intval($_POST['input_interview_id'])
 						);
 					}
+					else if(
+						isset($_POST['button_to_dequeue'])
+						&& isset($_POST['input_interview_id'])
+					) {
+						$update_request = new GatekeeperCallingOrDecisionOrHappeningToDequeued(
+							$update_known,
+							intval($_POST['input_interview_id'])
+						);
+					}
 
 					return $update_request === null ? 'unknown request' : $update_request;
 				}

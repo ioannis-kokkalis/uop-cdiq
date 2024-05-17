@@ -308,7 +308,9 @@ form.addEventListener("submit", (event) => {
 					+ iwee_id + "'";
 
 			case form_button_to_dequeue:
-				break; // TODO
+				return "removing this interview. Interviewee " +
+					iwee_id + " will be able to enqueue again via the Secretary at Interviewer '" +
+					iwer.getName() + "'";
 
 			case form_button_active_inactive:
 				break; // TODO
