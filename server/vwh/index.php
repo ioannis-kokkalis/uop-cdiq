@@ -2,7 +2,7 @@
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
 
-$a = new Assembler('Career Day Interviews Queuing 2024');
+$a = new Assembler('Career Day 2024<br>Interviews');
 
 $a->body_main = function() { ?>
 	<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed eget neque id nisi placerat interdum sed pellentesque velit. Nunc a accumsan massa. Maecenas semper tellus justo, at malesuada arcu maximus ac. Vivamus luctus vehicula orci, sed scelerisque ipsum viverra a. Cras facilisis, eros ut molestie hendrerit, metus elit sollicitudin augue, nec scelerisque est nisl quis est. Cras eleifend pellentesque scelerisque. Vivamus nec leo sollicitudin, laoreet velit at, dignissim arcu. Nunc malesuada neque non auctor pellentesque. Nunc iaculis, augue vitae pharetra ullamcorper, dolor leo congue nisi, a imperdiet tellus nibh nec dui. Phasellus et viverra massa.</p>
