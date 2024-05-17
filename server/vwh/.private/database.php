@@ -338,29 +338,47 @@ class SystemCallingToDecision extends UpdateRequest {
 
 };
 
-class GatekeeperActiveToInactiveInterviewer extends UpdateRequest {
+class GatekeeperActiveInactiveFlipInterviewer extends UpdateRequest {
 
-	public function __construct(int $update_id_known) {
+	private readonly int $interviewer_id;
+
+	public function __construct(int $update_id_known, int $interviewer_id) {
 		parent::__construct($update_id_known);
+
+		$this->interviewer_id = $interviewer_id;
 	}
 
 	protected function process(PDO $pdo): void {
-		throw new Exception("not implemented yet");
+		$statement = $pdo->query("UPDATE interviewer
+			SET
+				active = NOT active
+			WHERE
+				id = {$this->interviewer_id}
+			RETURNING active;
+		");
+
+		if($statement === false) {
+			throw new Exception("failed to execute query");
+		}
+
+		if($statement->fetch()['active'] === false) {
+			$statement = $pdo->query("UPDATE interview
+				SET
+					state_ = 'ENQUEUED',
+					state_timestamp = CURRENT_TIMESTAMP
+				WHERE
+					id_interviewer = {$this->interviewer_id}
+					AND state_ IN ('CALLING', 'DECISION', 'HAPPENING');
+			");
+			
+			if($statement === false) {
+				throw new Exception("failed to execute query");
+			}
+		}
+
 	}
 
-}; // TODO // MANAGER_AVAILABLE_PAUSE & MANAGER_CALLING_PAUSE
-
-class GatekeeperInactiveToActiveInterviewer extends UpdateRequest {
-
-	public function __construct(int $update_id_known) {
-		parent::__construct($update_id_known);
-	}
-
-	protected function process(PDO $pdo): void {
-		throw new Exception("not implemented yet");
-	}
-
-}; // TODO
+};
 
 class GatekeeperCallingOrDecisionToHappening extends UpdateRequest {
 

@@ -331,7 +331,7 @@ h1, h2, h3, h4, h5, h6 {
 		}
 
 		& > .status_indicator--available {
-			background-color: rgb(0, 169, 175);
+			background-color: rgb(0, 189, 196);
 		}
 
 		& > .status_indicator--calling {
@@ -344,6 +344,10 @@ h1, h2, h3, h4, h5, h6 {
 
 		& > .status_indicator--happening {
 			background-color: rgb(202, 24, 1);
+		}
+		
+		& > .status_indicator--paused {
+			background-color: rgb(145, 0, 150);
 		}
 	
 		& > .status_information {

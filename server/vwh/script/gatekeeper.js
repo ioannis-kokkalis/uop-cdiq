@@ -184,6 +184,8 @@ class InterviewerElement {
 		#status_indicator;
 		#status_information;
 
+	#interviewer;
+
 	constructor() {
 		let e = this.#container = document.createElement('div');
 		e.classList.add('interviewer');
@@ -220,21 +222,26 @@ class InterviewerElement {
 
 	notify(data) {
 		if(data instanceof Interviewer === true) {
-			let iwer = data;
+			let iwer = this.#interviewer = data;
 	
 			this.#info_img.src = iwer.getImageUrl();
 			this.#info_p.innerHTML =
-				iwer.getName() + " " + 	
-				(iwer.getActive() === false ? '(paused)' : '') +
+				iwer.getName() + " " +
 				"<br>Table: " + iwer.getTable();
 		}
 		else if(data instanceof Interview === true) {
 			let iw = data;
 
 			if(Interviewer.isNoInterview(iw)) {
-				this.#status_information.innerHTML =
-					Math.random() < 0.97 ? "Available" : "**cricket noises**";
-				this.#status_indicator.classList.add('status_indicator--available');
+				if(this.#interviewer.getActive() === true) {
+					this.#status_information.innerHTML =
+						Math.random() < 0.97 ? "Available" : "**cricket noises**";
+					this.#status_indicator.classList.add('status_indicator--available');
+				}
+				else {
+					this.#status_information.innerHTML = "Paused";
+					this.#status_indicator.classList.add('status_indicator--paused');
+				}
 			}
 			else {
 				let ts = new Date(iw.getStateTimestamp());
@@ -313,7 +320,21 @@ form.addEventListener("submit", (event) => {
 					iwer.getName() + "'";
 
 			case form_button_active_inactive:
-				break; // TODO
+				$s = '';
+
+				if(iwer.getActive() === true) {
+					$s = "pausing Interviewer '" + iwer.getName() + "'.";
+					
+					if(Interviewer.isNoInterview(iwer.getInterview()) === false) {
+						$s += " Interviewee "  + iwee_id +
+						" will stay ENQUEUED (like it never started CALLING) on the Interviewer.'";
+					}
+				}
+				else {
+					$s = "unpausing Interviewer '" + iwer.getName() + "'.";
+				}
+
+				return $s;
 		}
 
 		return null;
@@ -327,10 +348,57 @@ form.addEventListener("submit", (event) => {
 
 // ===
 
+function interviewer_element_dialog_form_preperation(iwer) {
+	form_input_interviewer_id.value = iwer.getId();
+		
+	form_button_active_inactive.innerText =
+		iwer.getActive() === true ? 'Pause' : 'Unpause';
+		
+	display(false, [
+		form_button_to_dequeue,
+		form_button_to_happening,
+		form_button_to_completed
+	]);
+		
+	let iw = iwer.getInterview();
+		
+	if (Interviewer.isNoInterview(iw) === false) {
+		form_input_interview_id.value = iw.getId();
+		
+		let iw_state = iw.getState();
+		
+		if (iw_state === 'CALLING' || iw_state === 'DECISION') {
+			display(true, [
+				form_button_to_dequeue,
+				form_button_to_happening
+			]);
+		}
+		else if (iw_state === 'HAPPENING') {
+			display(true, [
+				form_button_to_dequeue,
+				form_button_to_completed
+			]);
+		}
+		else {
+			// ??? should not be here in the first place
+		}
+	}
+}
+
 function update(data) {
 	update_interviewers(data['interviewers']);
 	// update_interviewees(data['interviewees']); // non utilized
 	update_interviews(data['interviews']);
+
+	if(interviewers[form_input_interviewer_id.value] !== undefined) {
+		interviewer_element_dialog_form_preperation(
+			interviewers[form_input_interviewer_id.value]
+		);
+	}
+	else {
+		dialog.close();
+		form.reset();
+	}
 
 	display(
 		container_interviewers.childElementCount === 1, // TODO eh lazy solution
@@ -352,43 +420,7 @@ function update_interviewers(rows) {
 			ie = new InterviewerElement();
 			interviewer.observerAdd(ie);
 			ie.get().addEventListener('click', (event) => {
-				form_input_interviewer_id.value = interviewer.getId();
-				
-				form_button_active_inactive.innerText =
-					interviewer.getActive() === true ? 'Pause' : 'Unpause';
-					
-				let iw = interviewer.getInterview();
-
-				if(Interviewer.isNoInterview(iw) === false) {
-					form_input_interview_id.value = iw.getId();
-				}
-
-				display(false, [
-					form_button_to_dequeue,
-					form_button_to_happening,
-					form_button_to_completed
-				]);
-
-				if (iw !== undefined) {
-					let iw_state = iw.getState();
-
-					if (iw_state === 'CALLING' || iw_state === 'DECISION') {
-						display(true, [
-							form_button_to_dequeue,
-							form_button_to_happening
-						]);
-					}
-					else if (iw_state === 'HAPPENING') {
-						display(true, [
-							form_button_to_dequeue,
-							form_button_to_completed
-						]);
-					}
-					else {
-						// ??? should not be here in the first place
-					}
-				}
-
+				interviewer_element_dialog_form_preperation(interviewer);
 				dialog.showModal();
 			});
 
