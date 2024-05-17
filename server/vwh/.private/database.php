@@ -327,6 +327,10 @@ class SystemCallingToDecision extends UpdateRequest {
 				CURRENT_TIMESTAMP - state_timestamp > INTERVAL '{$this->after_seconds} seconds';
 		");
 
+		if($statement->rowCount() === 0) {
+			throw new Exception("none moved to decision");
+		}
+
 		if($statement === false) {
 			throw new Exception("failed to execute query");
 		}
@@ -572,7 +576,6 @@ class Postgres implements Database, DatabaseAdmin {
 					$updated_or_reason = $update_request->dispatch($this->pdo);
 
 					if($updated_or_reason === true) {
-
 						$this->update_handled_routine();
 					}
 					else {

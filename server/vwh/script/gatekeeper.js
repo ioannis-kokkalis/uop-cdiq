@@ -238,7 +238,6 @@ class InterviewerElement {
 			}
 			else {
 				let ts = new Date(iw.getStateTimestamp());
-				ts = new Date('2024-02-04 11:24:22');
 				ts = (ts.getHours() < 10 ? '0' : '') + ts.getHours() + ":"
 					+ (ts.getMinutes() < 10 ? '0' : '') + ts.getMinutes() + ":"
 					+ (ts.getSeconds() < 10 ? '0' : '') + ts.getSeconds();
@@ -426,12 +425,3 @@ function update_interviews(rows) {
 		interviewers[id].updateInterview(); // default undefined
 	});
 }
-
-
-// ===
-
-document.getElementById('form_tcdc') // TODO temporary, remove later
-	.addEventListener("submit", (event) => {
-		submiting(document.getElementById('form_tcdc'), "do it", null, event);
-	}
-);

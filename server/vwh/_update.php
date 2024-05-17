@@ -25,6 +25,15 @@ $db = database();
 $parameters = [
 	Parameter::AM_I_UP_TO_DATE->value => [
 		'handle' => function() use ($db) {
+			require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
+
+			if( AssemblerOperate::operator_is(Operator::Gatekeeper) === true ) {
+				$db->update_handle(new SystemCallingToDecision(
+					$db->update_happened_recent(),
+					10 /* seconds */
+				));
+				// TODO!!! change it to "3 * 60" seconds keep 10 for testing
+			}
 
 			$update_known = intval($_GET[Parameter::AM_I_UP_TO_DATE->value]);
 			$update_recent = $db->update_happened_recent();
@@ -172,14 +181,6 @@ $parameters = [
 						$update_request = new GatekeeperHappeningToCompleted(
 							$update_known,
 							intval($_POST['input_interview_id'])
-						);
-					}
-					
-					/* // TODO make it trigger from routine in the system */
-					else if(isset($_POST['tcdc'])) {
-						$update_request = new SystemCallingToDecision(
-							$update_known,
-							3 * 60 /* seconds */
 						);
 					}
 
