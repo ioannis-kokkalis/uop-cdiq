@@ -162,6 +162,15 @@ $parameters = [
 							...(isset($_POST['interviewers']) ? $_POST['interviewers'] : [])
 						);
 					}
+					else if(
+						isset($_POST['iwee_button_active_inactive'])
+						&& isset($_POST['iwee_select']) && $_POST['iwee_select'] !== 'null'
+					) {
+						$update_request = new SecretaryActiveInactiveFlipInterviewee(
+							$update_known,
+							intval($_POST['iwee_select'])
+						);
+					}
 
 					# ---
 

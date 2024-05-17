@@ -152,29 +152,46 @@ class SecretaryEnqueueDequeue extends UpdateRequest {
 
 };
 
-class SecretaryActiveToInactiveInterviewee extends UpdateRequest {
+class SecretaryActiveInactiveFlipInterviewee extends UpdateRequest {
 
-	public function __construct(int $update_id_known) {
+	private readonly int $interviewee_id;
+
+	public function __construct(int $update_id_known, int $interviewee_id) {
 		parent::__construct($update_id_known);
+
+		$this->interviewee_id = $interviewee_id;
 	}
 
 	protected function process(PDO $pdo): void {
-		throw new Exception("not implemented yet");
+		$statement = $pdo->query("UPDATE interviewee
+			SET
+				active = NOT active
+			WHERE
+				id = {$this->interviewee_id}
+			RETURNING active;
+		");
+
+		if($statement === false) {
+			throw new Exception("failed to execute query");
+		}
+
+		if($statement->fetch()['active'] === false) {
+			$statement = $pdo->query("UPDATE interview
+				SET
+					state_ = 'ENQUEUED',
+					state_timestamp = CURRENT_TIMESTAMP
+				WHERE
+					id_interviewee = {$this->interviewee_id}
+					AND state_ IN ('CALLING', 'DECISION', 'HAPPENING');
+			");
+			
+			if($statement === false) {
+				throw new Exception("failed to execute query");
+			}
+		}
 	}
 
-}; // TODO
-
-class SecretaryInactiveToActiveInterviewee extends UpdateRequest {
-
-	public function __construct(int $update_id_known) {
-		parent::__construct($update_id_known);
-	}
-
-	protected function process(PDO $pdo): void {
-		throw new Exception("not implemented yet");
-	}
-
-}; // TODO
+};
 
 class SecretaryAddInterviewer extends UpdateRequest {
 
@@ -375,7 +392,6 @@ class GatekeeperActiveInactiveFlipInterviewer extends UpdateRequest {
 				throw new Exception("failed to execute query");
 			}
 		}
-
 	}
 
 };
