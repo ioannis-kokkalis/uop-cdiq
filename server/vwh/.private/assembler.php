@@ -36,9 +36,11 @@ class Assembler {
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<link rel="stylesheet" href="<?= $this->head_stylesheet->value ?>">
-		<?php if((mt_rand() / mt_getrandmax()) >  0.99) {
-			?> <link rel="stylesheet" href="/style/color-shiny.css"> <?php
-		} ?>
+		<link rel="shortcut icon" href="/resources/favicon/normal.svg" type="image/x-icon">
+		<?php if((mt_rand() / mt_getrandmax()) >  0.99) { ?>
+			<link rel="stylesheet" href="/style/color-shiny.css">
+			<link rel="shortcut icon" href="/resources/favicon/shiny.svg" type="image/x-icon">
+		<?php } ?>
 		<title><?= $this->head_title ?></title>
 		<?php
 	}
