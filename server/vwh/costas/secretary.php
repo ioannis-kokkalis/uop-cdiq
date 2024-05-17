@@ -36,7 +36,7 @@ $a->body_main = function() { ?>
 			</select>
 
 			<div id="iwee_buttons" class="horizontal_buttons">
-				<button id="iwee_button_active_inactive" name="iwee_button_active_inactive" type="submit">Active / Inactive</button>
+				<button id="iwee_button_active_inactive" name="iwee_button_active_inactive" type="submit">Pause / Unpause</button>
 				<button id="iwee_button_delete" name="iwee_button_delete" type="submit">Delete</button>
 			</div>
 

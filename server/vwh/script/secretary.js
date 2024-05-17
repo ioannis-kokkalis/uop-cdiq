@@ -1,10 +1,14 @@
 
+// TODO holy shit this is so bad
+// rework it with classes like gatekeeper and queues
+
 const form = document.getElementById('form');
 const iwer_form = document.getElementById('iwer_form');
 
 const iwee_filter = document.getElementById('iwee_filter');
 const iwee_select = document.getElementById('iwee_select');
 const iwee_buttons = document.getElementById('iwee_buttons');
+	const iwee_button_active_inactive = document.getElementById('iwee_button_active_inactive');
 const iwee_notice = document.getElementById('iwee_notice');
 
 const iwer_fieldset = document.getElementById('iwer_fieldset');
@@ -110,6 +114,8 @@ iwee_select.addEventListener('change', function () {
 	});
 
 	if(iwee_option_empty.selected === false) {
+		iwee_button_active_inactive.innerHTML = interviewees[iwee_select.value]['active'] === true ? "Pause" : "Unpause";
+
 		interviews.forEach(iw => {
 			let iwer = interviewers[iw['id_interviewer']];
 			let iwee = interviewees[iw['id_interviewee']];
@@ -174,7 +180,7 @@ form.addEventListener("submit", function (event) {
 				ret_value = 'UPDATING';
 			}
 			else if(button === button_active_inactive) {
-				ret_value = "marking as " + (interviewee_selected.active ? "ACTIVE" : "INACTIVE");
+				ret_value = (interviewee_selected.active === true ? "pausing" : "unpausing");
 			}
 			else if(button === button_delete) {
 				ret_value = 'DELETING';
@@ -183,7 +189,7 @@ form.addEventListener("submit", function (event) {
 				ret_value = 'UNKNOWN ACTION with';
 			}
 
-			ret_value += ' interviewee with ID:' + interviewee_selected.id + ' and EMAIL:' + interviewee_selected.email;
+			ret_value += ' Interviewee ' + interviewee_selected.id + ' with Email:' + interviewee_selected.email;
 		}
 
 		return ret_value;
@@ -350,7 +356,7 @@ function update(data) {
 		// was moved from enqueued, but got dequeued
 		if(interviewer['element_input'].disabled === true) {
 			interviewer['element_input'].disabled = false;
-			interviewer['element_input'].checked = false;
+			interviewer['element_input'].checked = interviewer['active'] === false;
 		}
 	});
 
@@ -363,6 +369,8 @@ function update(data) {
 	// ===
 
 	if(iwee_option_empty.selected === false) {
+		iwee_button_active_inactive.innerHTML = interviewees[iwee_select.value]['active'] === true ? "Pause" : "Unpause";
+
 		interviews.forEach(iw => {
 			let iwee = interviewees[iw['id_interviewee']];
 			
