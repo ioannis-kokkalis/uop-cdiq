@@ -46,7 +46,7 @@ $a->body_main = function() { ?>
 		<fieldset id="iwer_fieldset"> <!-- interviewer -->
 			<legend>Interviewer(s)</legend>
 
-			<input id="iwer_filter" type="text" placeholder="Filter interviewers... (not implemented yet)">
+			<input id="iwer_filter" type="text" placeholder="Filter interviewers...">
 
 			<div id="iwer_checkboxes">
 				<!-- filled in script -->

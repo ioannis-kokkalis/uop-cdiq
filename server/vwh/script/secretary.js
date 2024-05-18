@@ -14,6 +14,7 @@ const iwee_notice = document.getElementById('iwee_notice');
 const iwer_fieldset = document.getElementById('iwer_fieldset');
 const iwer_filter = document.getElementById('iwer_filter');
 const iwer_checkboxes = document.getElementById('iwer_checkboxes');
+const iwer_buttons = document.getElementById('iwer_buttons');
 const iwer_button_add = document.getElementById('iwer_button_add');
 const iwer_info_dialog = document.getElementById('iwer_info_dialog');
 const iwer_info_dialog_delete = document.getElementById('iwer_info_dialog_delete');
@@ -27,8 +28,8 @@ const iwer_info_dialog_id = document.getElementById('iwer_info_dialog_id');
 // 	}
 // });
 
-display( true, [iwee_filter, iwee_select, iwer_fieldset]);
-display(false, [iwee_buttons, iwee_notice]);
+display( true, [iwee_filter, iwee_select, iwer_fieldset, iwer_buttons]);
+display(false, [iwee_buttons, iwee_notice, iwer_checkboxes]);
 
 // ...
 
@@ -100,7 +101,43 @@ iwee_filter.addEventListener('input', function () {
 });
 
 iwer_filter.addEventListener('input', function () {
-	// TODO
+	
+	if(iwer_checkboxes.children.length === 0) {
+		display( true, [iwer_buttons]);
+		display(false, [iwer_checkboxes]);
+
+		return;
+	}
+
+	if (iwer_filter.value.trim() === '') {
+		display( true, iwer_checkboxes.children);
+		display( true, [iwer_checkboxes]);
+		display(false, [iwer_buttons]);
+		
+		return;
+	}
+	
+	let options_on  = [];
+	let options_off = [];
+
+	Object.keys(interviewers).forEach(function (id) {
+		const iwer = interviewers[id];
+		
+		if (iwer['element_p'].innerHTML.toLowerCase().indexOf(iwer_filter.value.toLowerCase()) === -1) {
+			options_off.push(iwer['element_label']);
+		}
+		else {
+			options_on.push(iwer['element_label']);
+		}
+	});
+
+	display( true, options_on);
+	display(false, options_off);
+
+	let condition = options_on.length === 0;
+
+	display( condition, [iwer_buttons]);
+	display(!condition, [iwer_checkboxes]);
 });
 
 iwee_select.addEventListener('change', function () {
@@ -143,6 +180,11 @@ iwee_select.addEventListener('change', function () {
 
 iwer_button_add.addEventListener('click', function () {
 	display(false, [iwer_info_dialog_delete]);
+
+	if(iwer_info_dialog_id.value === 'null') {
+		document.getElementById('iwer_info_dialog_name').value = iwer_filter.value.trim();
+	}
+
 	iwer_info_dialog.showModal();
 });
 
@@ -365,6 +407,8 @@ function update(data) {
 		iwer_checkboxes.removeChild(interviewers[id]['element_label']);
 		delete interviewers[id];
 	});
+
+	iwer_filter.dispatchEvent(new Event('input'));
 
 	// ===
 
