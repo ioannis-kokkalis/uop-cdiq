@@ -11,6 +11,8 @@ const dialog = document.getElementById('dialog_action');
 
 const container_interviewers = document.getElementById("container_interviewers");
 
+let calling_time_in_seconds = 0;
+
 const interviewers = {};
 
 class Interview {
@@ -26,7 +28,7 @@ class Interview {
 		this.#interviewee_id = row['id_interviewee'];
 		this.#interviewer_id = row['id_interviewer'];
 		this.#state = row['state_'];
-		this.#state_timestamp = Date.parse(row['state_timestamp']);
+		this.#state_timestamp = Date.parse(row['state_timestamp'] + '+00:00');
 	}
 
 	getId() { 
@@ -186,6 +188,8 @@ class InterviewerElement {
 
 	#interviewer;
 
+	#live_time_counter_interval_id;
+
 	constructor() {
 		let e = this.#container = document.createElement('div');
 		e.classList.add('interviewer');
@@ -230,6 +234,8 @@ class InterviewerElement {
 				"<br>Table: " + iwer.getTable();
 		}
 		else if(data instanceof Interview === true) {
+			clearInterval(this.#live_time_counter_interval_id);
+			
 			let iw = data;
 
 			if(Interviewer.isNoInterview(iw)) {
@@ -244,39 +250,63 @@ class InterviewerElement {
 				}
 			}
 			else {
-				let ts = new Date(iw.getStateTimestamp());
-				ts = (ts.getHours() < 10 ? '0' : '') + ts.getHours() + ":"
-					+ (ts.getMinutes() < 10 ? '0' : '') + ts.getMinutes() + ":"
-					+ (ts.getSeconds() < 10 ? '0' : '') + ts.getSeconds();
-				switch (iw.getState()) {
-					case 'CALLING':
-						this.#status_indicator.classList.add('status_indicator--calling');
-						this.#status_information.innerHTML = 
-							'Calling Interviewee ' +
-							iw.getIntervieweeId() +
-							'<br>Started ' + // TODO do it 'elapsed' instead of started, with span?
-							ts
-							;
-						break;
-					case 'DECISION':
-						this.#status_indicator.classList.add('status_indicator--decision');
-						this.#status_information.innerHTML =
-							'Decision for Interviewee ' +
-							iw.getIntervieweeId()
-							;
-						break;
-					case 'HAPPENING':
-						this.#status_indicator.classList.add('status_indicator--happening');
-						this.#status_information.innerHTML = 
-							'Happening with Interviewee ' +
-							iw.getIntervieweeId() +
-							'<br>Started ' + // TODO do it 'elapsed' instead of started, with span?
-							ts
-							;
-						break;
-
-					default: /* should not come here */ return;
+				if(iw.getState() === 'DECISION') {
+					this.#status_indicator.classList.add('status_indicator--decision');
+					this.#status_information.innerHTML =
+						'Decision for Interviewee ' +
+						iw.getIntervieweeId()
+						;
 				}
+				else {
+					let f = () => {
+						switch (iw.getState()) {
+							case 'CALLING':
+								let remaining = iw.getStateTimestamp() + (calling_time_in_seconds * 1000) - Date.now();
+
+								remaining = new Date(remaining > 0 ? remaining : 0);
+			
+								remaining = (remaining.getUTCMinutes() < 10 ? '0' : '') + remaining.getUTCMinutes() + ":"
+									+ (remaining.getUTCSeconds() < 10 ? '0' : '') + remaining.getUTCSeconds();
+
+								// ---
+
+								this.#status_indicator.classList.add('status_indicator--calling');
+								this.#status_information.innerHTML = 
+									'Calling Interviewee ' +
+									iw.getIntervieweeId() +
+									'<br>Remaining: <span>' +
+									remaining +
+									'</span>';
+								break;
+							case 'HAPPENING':
+								let elapsed = Date.now() - iw.getStateTimestamp();
+
+								elapsed = new Date(elapsed);
+			
+								elapsed = (elapsed.getUTCHours() < 10 ? '0' : '') + elapsed.getUTCHours() + ":" 
+									+ (elapsed.getUTCMinutes() < 10 ? '0' : '') + elapsed.getUTCMinutes() + ":"
+									+ (elapsed.getUTCSeconds() < 10 ? '0' : '') + elapsed.getUTCSeconds();
+
+								// ---
+
+								this.#status_indicator.classList.add('status_indicator--happening');
+								this.#status_information.innerHTML = 
+									'Happening with Interviewee ' +
+									iw.getIntervieweeId() +
+									'<br>Elapsed: <span>' +
+									elapsed +
+									'</span>';
+								break;
+
+							default: /* should not come here */ return;
+						}
+					};
+
+					f();
+
+					this.#live_time_counter_interval_id = setInterval(f, 500);
+				}
+
 			}
 
 			if(this.#status_indicator.classList.length === 3) { // (0) base + (1) old + (2) new
@@ -386,6 +416,8 @@ function interviewer_element_dialog_form_preperation(iwer) {
 }
 
 function update(data) {
+	calling_time_in_seconds = data['calling_time'];
+
 	update_interviewers(data['interviewers']);
 	// update_interviewees(data['interviewees']); // non utilized
 	update_interviews(data['interviews']);

@@ -288,7 +288,7 @@ h1, h2, h3, h4, h5, h6 {
 	flex-direction: row;
 	flex-wrap: wrap;
 	justify-content: center;
-	align-items: baseline;
+	align-items: stretch;
 
 	width: 100%;
 
@@ -306,8 +306,6 @@ h1, h2, h3, h4, h5, h6 {
 			display: flex;
 			flex-direction: row;
 			align-items: center;
-
-			flex-grow: 1;
 	
 			gap: .6rem;
 		
@@ -351,9 +349,16 @@ h1, h2, h3, h4, h5, h6 {
 		}
 	
 		& > .status_information {
+			flex-grow: 1;
+
 			text-align: center;
-			padding: 0.5rem;
 			line-height: 1.25rem;
+			
+			padding: 0.5rem;
+
+			& > span {
+				font-family: Consolas;
+			}
 		}
 	}
 
@@ -365,6 +370,7 @@ h1, h2, h3, h4, h5, h6 {
 .dialog_details[open] {
 	flex-direction: column;
 	align-items: stretch;
+	justify-content: flex-start;
 	flex-wrap: nowrap;
 
 	width: auto;

@@ -2,6 +2,8 @@
 const no_interviewers_message = document.getElementById('no_interviewers_message');
 const container_interviewers = document.getElementById("container_interviewers");
 
+let calling_time_in_seconds = 0;
+
 // ===
 
 class Notifier {
@@ -188,7 +190,7 @@ class Interview {
 		this.#interviewee = row['interviewee'];
 		this.#interviewer = row['interviewer'];
 		this.#state = row['state_'];
-		this.#state_timestamp = Date.parse(row['state_timestamp']);
+		this.#state_timestamp = Date.parse(row['state_timestamp'] + '+00:00'); // to parse it UTC
 	}
 
 	// ===
@@ -280,6 +282,8 @@ class ElementInterviewer extends Observer {
 
 	#interviewer;
 
+	#live_time_counter_interval_id;
+
 	constructor() {
 		super();
 
@@ -314,6 +318,10 @@ class ElementInterviewer extends Observer {
 		return this.#container;
 	}
 
+	clearIntervals() {
+		clearInterval(this.#live_time_counter_interval_id);
+	}
+
 	// ===
 
 	observe(data) {
@@ -326,6 +334,8 @@ class ElementInterviewer extends Observer {
 				"<br>Table: " + iwer.getTable();
 		}
 		else if(data['notifier'] instanceof Interviewer && data['reason'] === 'interviews') {
+			this.clearIntervals();
+
 			let iw = data['notifier'].getInterviewCurrent();
 
 			if(iw === undefined) {
@@ -342,39 +352,62 @@ class ElementInterviewer extends Observer {
 				}
 			}
 			else {
-				let ts = new Date(iw.getStateTimestamp());
-				ts = (ts.getHours() < 10 ? '0' : '') + ts.getHours() + ":"
-					+ (ts.getMinutes() < 10 ? '0' : '') + ts.getMinutes() + ":"
-					+ (ts.getSeconds() < 10 ? '0' : '') + ts.getSeconds();
-				switch (iw.getState()) {
-					case 'CALLING':
-						this.#status_indicator.classList.add('status_indicator--calling');
-						this.#status_information.innerHTML = 
-							'Calling Interviewee ' +
-							iw.getInterviewee().getId() +
-							'<br>Started ' + // TODO do it 'elapsed' instead of started
-							ts
-							;
-						break;
-					case 'DECISION':
-						this.#status_indicator.classList.add('status_indicator--decision');
-						this.#status_information.innerHTML =
-							'Decision for Interviewee ' +
-							iw.getInterviewee().getId()
-							;
-						break;
-					case 'HAPPENING':
-						this.#status_indicator.classList.add('status_indicator--happening');
-						this.#status_information.innerHTML = 
-							'Happening with Interviewee ' +
-							iw.getInterviewee().getId() +
-							'<br>Started ' + // TODO do it 'elapsed' instead of started
-							ts
-							;
-						break;
-
-					default: /* should not come here */ return;
+				if(iw.getState() === 'DECISION') {
+					this.#status_indicator.classList.add('status_indicator--decision');
+					this.#status_information.innerHTML =
+						'Decision for Interviewee ' +
+						iw.getInterviewee().getId()
+						;
 				}
+				else {
+					let f = () => {
+						switch (iw.getState()) {
+							case 'CALLING':
+								let remaining = iw.getStateTimestamp() + (calling_time_in_seconds * 1000) - Date.now();
+
+								remaining = new Date(remaining > 0 ? remaining : 0);
+			
+								remaining = (remaining.getUTCMinutes() < 10 ? '0' : '') + remaining.getUTCMinutes() + ":"
+									+ (remaining.getUTCSeconds() < 10 ? '0' : '') + remaining.getUTCSeconds();
+	
+								// ---
+	
+								this.#status_indicator.classList.add('status_indicator--calling');
+								this.#status_information.innerHTML = 
+									'Calling Interviewee ' +
+									iw.getInterviewee().getId() +
+									'<br>Remaining: <span>' +
+									remaining +
+									'</span>';
+								break;
+							case 'HAPPENING':
+								let elapsed = Date.now() - iw.getStateTimestamp();
+
+								elapsed = new Date(elapsed);
+			
+								elapsed = (elapsed.getUTCHours() < 10 ? '0' : '') + elapsed.getUTCHours() + ":" 
+									+ (elapsed.getUTCMinutes() < 10 ? '0' : '') + elapsed.getUTCMinutes() + ":"
+									+ (elapsed.getUTCSeconds() < 10 ? '0' : '') + elapsed.getUTCSeconds();
+	
+								// ---
+
+								this.#status_indicator.classList.add('status_indicator--happening');
+								this.#status_information.innerHTML = 
+									'Happening with Interviewee ' +
+									iw.getInterviewee().getId() +
+									'<br>Elapsed: <span>' +
+									elapsed +
+									'</span>';
+								break;
+	
+							default: /* should not come here */ return;
+						}
+					};
+	
+					f();
+	
+					this.#live_time_counter_interval_id = setInterval(f, 500);
+				}	
 			}
 
 			if(this.#status_indicator.classList.length === 3) { // (0) base + (1) old + (2) new
@@ -464,6 +497,8 @@ class ElementDialogInterviewer extends Observer {
 			this.#interviewer_showing?.observerRemove(this);
 			this.#interviewer_showing?.observerRemove(this.#embeded_element_interviewer);
 			this.#interviewer_showing = undefined;
+			
+			this.#embeded_element_interviewer.clearIntervals();
 		});
 	}
 
@@ -562,6 +597,8 @@ const interviews	= new ManagementOfObjects(Interview);
 const dialog_details = new ElementDialogInterviewer();
 
 function update(data) {
+	calling_time_in_seconds = data['calling_time'];
+	
 	update_interviewers(data['interviewers']);
 	update_interviewees(data['interviewees']);
 	update_interviews(data['interviews'], data['interviews_current']);
