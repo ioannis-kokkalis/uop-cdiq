@@ -7,7 +7,7 @@ $a = new AssemblerOperate('Gatekeeper');
 $a->operator_ensure(Operator::Gatekeeper);
 
 $a->body_main = function() { ?>
-	<div id="container_interviewers">
+	<div id="container_interviewers" class="container_interviewers">
 		<p id="no_interviewers_message">No Interviewers in the system.</p>
 	</div>
 	
