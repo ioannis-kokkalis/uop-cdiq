@@ -500,6 +500,8 @@ interface Database {
 	public function retrieve(string ...$from_table) : array; # TODO rework to utilize views
 	
 	public function retrieve_gatekeeper_view() : array;
+
+	public function retrieve_queues_view() : array;
 }
 
 interface DatabaseAdmin {
@@ -814,6 +816,68 @@ class Postgres implements Database, DatabaseAdmin {
 		});
 	}
 
+	public function retrieve_queues_view() : array {
+		return $this->connect(true, function () {
+			try {
+				$this->pdo->beginTransaction();
+
+				$statement = $this->pdo->query("SELECT * FROM view_queues_iwers;");
+
+				if($statement === false) {
+					throw new Exception('failed execute to query');
+				}
+
+				$retrieved['interviewers'] = $statement->fetchAll();
+				
+				# ---
+
+				$statement = $this->pdo->query("SELECT * FROM view_queues_iwees;");
+
+				if($statement === false) {
+					throw new Exception('failed execute to query');
+				}
+
+				$retrieved['interviewees'] = $statement->fetchAll();
+				
+				# ---
+
+				$statement = $this->pdo->query("SELECT * FROM view_queues_iws;");
+
+				if($statement === false) {
+					throw new Exception('failed execute to query');
+				}
+
+				$retrieved['interviews'] = $statement->fetchAll(); 
+
+				# ---
+
+				$statement = $this->pdo->query("SELECT * FROM view_queues_iws_current;");
+
+				if($statement === false) {
+					throw new Exception('failed execute to query');
+				}
+
+				$retrieved['interviews_current'] = $statement->fetchAll(); 
+
+				# ---
+
+				$statement = $this->pdo->query("SELECT * FROM update_recent_id;");
+				$retrieved['update'] = $statement === false ? 0 : $statement->fetch()['recent'];
+				
+				$this->pdo->commit();
+
+				return $retrieved;
+			}
+			catch (Throwable $th) {
+				if($this->pdo->inTransaction()) {
+					$this->pdo->rollBack();
+				}
+			}
+			
+			return [];
+		});
+	}
+
 	// ||
 	// \/ methods of DatabaseAdmin interface
 
@@ -918,6 +982,32 @@ class Postgres implements Database, DatabaseAdmin {
 				",
 
 				"CREATE VIEW view_gatekeeper_iws AS
+					SELECT DISTINCT ON (i.id_interviewer) i.*
+					FROM interview i
+					WHERE i.state_ in ('CALLING', 'DECISION', 'HAPPENING')
+					ORDER BY i.id_interviewer ASC, i.state_timestamp DESC;
+				",
+
+				"CREATE VIEW view_queues_iwers AS
+					SELECT
+						id,
+						name,
+						image_resource_url,
+						table_number,
+						active
+					FROM interviewer
+					ORDER BY name;
+				",
+
+				"CREATE VIEW view_queues_iwees AS
+					SELECT id, available FROM interviewee;
+				",
+
+				"CREATE VIEW view_queues_iws AS
+					SELECT * FROM interview ORDER BY id ASC;
+				",
+
+				"CREATE VIEW view_queues_iws_current AS
 					SELECT DISTINCT ON (i.id_interviewer) i.*
 					FROM interview i
 					WHERE i.state_ in ('CALLING', 'DECISION', 'HAPPENING')

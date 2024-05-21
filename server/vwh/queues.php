@@ -6,23 +6,17 @@ $a = new Assembler('Interviews');
 
 $a->body_main = function() { ?>
 
-	<p>
-	<?php # TODO placeholder, replace when actually retrieving data
-		$no_data_yet_message = array(
-			"Still waiting for data...",
-			"Awaiting data to be retrieved...",
-			"Fetching data...",
-		);
-
-		echo $no_data_yet_message[array_rand($no_data_yet_message)];
-	?>
-	</p>
+	<div id="container_interviewers" class="container_interviewers">
+		<p id="no_interviewers_message">No Interviewers in the system.</p>
+	</div>
 
 	<script src="/script/utilities.js"></script>
 	<script src="/script/short_polling.js"></script>
+	<script src="/script/queues.js"></script>
 	<script>
-		short_polling(5 /* seconds */, /* for */ 'queues', /* to retrieve */ (data) => {
-			console.log(data); // TODO use 'data' array and update the UI
+		// TODO move it back to 5 seconds
+		short_polling(2 /* seconds */, /* for */ 'queues', /* to retrieve */ (data) => {
+			update(data);
 		});
 	</script>
 <?php };

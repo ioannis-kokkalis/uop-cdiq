@@ -48,7 +48,7 @@ $parameters = [
 
 			$clients = [
 				'queues' =>		function () use ($db) : array {
-					return []; # TODO retrieve appropiete data from the database
+					return $db->retrieve_queues_view();
 				},
 				'secretary' =>	function () use ($db) : array {
 					require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
