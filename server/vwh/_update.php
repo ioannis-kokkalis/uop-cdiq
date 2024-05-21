@@ -12,6 +12,8 @@ if (isset($_GET) === false) {
 
 # ---
 
+define('CALLING_TIME_IN_SECONDS', 20); // TODO!!! change it to "3 * 60" seconds after testing
+
 enum Parameter : string {
 	case AM_I_UP_TO_DATE = 'am_i_up_to_date';
 	case GET_ME_UP_TO_DATE = 'get_me_up_to_date';
@@ -30,9 +32,8 @@ $parameters = [
 			if( AssemblerOperate::operator_is(Operator::Gatekeeper) === true ) {
 				$db->update_handle(new SystemCallingToDecision(
 					$db->update_happened_recent(),
-					10 /* seconds */
+					CALLING_TIME_IN_SECONDS
 				));
-				// TODO!!! change it to "3 * 60" seconds keep 10 for testing
 			}
 
 			$update_known = intval($_GET[Parameter::AM_I_UP_TO_DATE->value]);
@@ -48,7 +49,7 @@ $parameters = [
 
 			$clients = [
 				'queues' =>		function () use ($db) : array {
-					return $db->retrieve_queues_view();
+					return array_merge($db->retrieve_queues_view(), ['calling_time' => CALLING_TIME_IN_SECONDS]);
 				},
 				'secretary' =>	function () use ($db) : array {
 					require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
@@ -68,7 +69,7 @@ $parameters = [
 						return [];
 					}
 					else {
-						return $db->retrieve_gatekeeper_view();
+						return array_merge($db->retrieve_gatekeeper_view(), ['calling_time' => CALLING_TIME_IN_SECONDS]);
 					}
 				},
 			];
