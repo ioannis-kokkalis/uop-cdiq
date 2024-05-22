@@ -29,6 +29,11 @@ abstract class UpdateRequest {
 		}
 	}
 
+	public function when_dispatch_fails() : void {
+		// cleanup stuff that happened anywhere like consturctor but not at 'process'
+		// PRACTICALLY used for image resources trashing in case of failure when dispaching
+	}
+
 	/**
 	 * Assumes the PDO given has connected and selected the database while in a transaction wihout interuptions.
 	 * 
@@ -87,17 +92,13 @@ class SecretaryDeleteInterviewee extends UpdateRequest {
 		");
 		# TODO probably break it into two queries so the exception can be more spesific
 
-		if($statement->rowCount() === 0) {
-			throw new Exception("interviewee still unavailable at the moment, can be deleted only when available");
-		}
-
-		# TODO delete interviews related to iwee_id with cascade?
-		# since the interviewee was available, no interviewer was unavailable due to
-		# this interviewee so cascade is just enough
-
 		if($statement === false) {
 			throw new Exception("failed to execute query");
 		}
+
+		if($statement->rowCount() === 0) {
+			throw new Exception("interviewee still unavailable at the moment, can be deleted only when available");
+		}		
 	}
 
 }
@@ -195,6 +196,13 @@ class SecretaryActiveInactiveFlipInterviewee extends UpdateRequest {
 
 class SecretaryAddInterviewer extends UpdateRequest {
 
+	protected static string $iwer_image_resource_url_base = '/resources/images/interviewer/';
+	protected static string $iwer_image_resource_url_placeholder = '/resources/images/interviewer/placeholder.svg';
+
+	public static function iwerImageResourceUrlPlaceholder() : string {
+		return SecretaryAddInterviewer::$iwer_image_resource_url_placeholder;
+	}
+
 	protected readonly string $iwer_name;
 	protected readonly string $iwer_table;
 	protected readonly string $iwer_image_resource_url;
@@ -204,7 +212,7 @@ class SecretaryAddInterviewer extends UpdateRequest {
 		int $update_id_known,
 		string $iwer_name,
 		string $iwer_table,
-		string $iwer_image_resource_url,
+		?array $iwer_image_file,
 		string $iwer_jobs,
 	) {
 		parent::__construct($update_id_known);
@@ -217,6 +225,8 @@ class SecretaryAddInterviewer extends UpdateRequest {
 
 		$this->iwer_name = $name;
 		
+		// ===
+
 		$iwer_table = $table = trim($iwer_table);
 		# TODO sanitazation and validation of "table"
 		if($table !== $iwer_table) {
@@ -225,13 +235,7 @@ class SecretaryAddInterviewer extends UpdateRequest {
 
 		$this->iwer_table = $table;
 
-		$iwer_image_resource_url = $image_resource_url = trim($iwer_image_resource_url);
-		# TODO sanitazation and validation of "image_resource_url"
-		if($image_resource_url !== $iwer_image_resource_url) {
-			throw new InvalidArgumentException("invalid image provided");
-		}
-
-		$this->iwer_image_resource_url = $image_resource_url;
+		// ===
 
 		$iwer_jobs = $jobs = trim($iwer_jobs);
 		# TODO sanitazation and validation of "table"
@@ -240,6 +244,23 @@ class SecretaryAddInterviewer extends UpdateRequest {
 		}
 
 		$this->iwer_jobs = $jobs;
+
+		// ===
+
+		if($iwer_image_file !== null && $iwer_image_file['error'] !== UPLOAD_ERR_NO_FILE) {
+			if($iwer_image_file['error'] !== UPLOAD_ERR_OK) {
+				throw new InvalidArgumentException("invalid image provided, probably too big (error code " . $iwer_image_file['error'] . ")");
+			}
+
+			$this->iwer_image_resource_url = $url = SecretaryAddInterviewer::$iwer_image_resource_url_base . uniqid("i");
+
+			if (move_uploaded_file($iwer_image_file['tmp_name'], $_SERVER['DOCUMENT_ROOT'] . $url) === false) {
+				throw new Exception("unable to store the image permanently");
+			}
+		}
+		else {
+			$this->iwer_image_resource_url = SecretaryAddInterviewer::$iwer_image_resource_url_placeholder;
+		}
 	}
 
 	protected function process(PDO $pdo): void {
@@ -250,6 +271,16 @@ class SecretaryAddInterviewer extends UpdateRequest {
 
 		if($statement === false) {
 			throw new Exception("failed to execute query");
+		}
+	}
+
+	public function when_dispatch_fails() : void {
+		if($this->iwer_image_resource_url === SecretaryAddInterviewer::$iwer_image_resource_url_placeholder) {
+			return;
+		}
+
+		if(file_exists($_SERVER['DOCUMENT_ROOT'] . $this->iwer_image_resource_url)) {
+			unlink($_SERVER['DOCUMENT_ROOT'] . $this->iwer_image_resource_url);
 		}
 	}
 
@@ -264,19 +295,40 @@ class SecretaryEditInterviewer extends SecretaryAddInterviewer {
 		int $iwer_id,
 		string $iwer_name,
 		string $iwer_table,
-		string $iwer_image_resource_url,
+		?array $iwer_image_file,
 		string $iwer_jobs,
 	) {
-		parent::__construct($update_id_known, $iwer_name, $iwer_table, $iwer_image_resource_url, $iwer_jobs);
+		parent::__construct($update_id_known, $iwer_name, $iwer_table, $iwer_image_file, $iwer_jobs);
 
 		$this->iwer_id = $iwer_id;
 	}
 
 	protected function process(PDO $pdo): void {
+		$statement = $pdo->query("SELECT image_resource_url FROM interviewer WHERE id = {$this->iwer_id};");
+
+		if($statement === false) {
+			throw new Exception("failed to execute query");
+		}
+
+		$image_url_new = $this->iwer_image_resource_url;
+		$image_url_old = $statement->fetch()['image_resource_url'];
+
+		$image_url_update = $image_url_old;
+
+		if($image_url_new !== SecretaryAddInterviewer::$iwer_image_resource_url_placeholder) {
+			if($image_url_old !== SecretaryAddInterviewer::$iwer_image_resource_url_placeholder) {
+				copy($_SERVER['DOCUMENT_ROOT'] . $image_url_new, $_SERVER['DOCUMENT_ROOT'] . $image_url_old);
+				unlink($_SERVER['DOCUMENT_ROOT'] . $image_url_new);
+			}
+			else {
+				$image_url_update = $image_url_new;
+			}
+		}
+
 		$statement = $pdo->query("UPDATE interviewer
 			SET
 				name = '{$this->iwer_name}',
-				image_resource_url = '{$this->iwer_image_resource_url}',
+				image_resource_url = '{$image_url_update}',
 				table_number = '{$this->iwer_table}',
 				jobs = '{$this->iwer_jobs}'
 			WHERE
@@ -305,20 +357,23 @@ class SecretaryDeleteInterviewer extends UpdateRequest {
 		$statement = $pdo->query("DELETE
 			FROM interviewer
 			WHERE id = {$this->iwer_id}
-			AND available = true;
+			AND available = true
+			RETURNING image_resource_url;
 		");
 		# TODO probably break it into two queries so the exception can be more specific
+
+		if($statement === false) {
+			throw new Exception("failed to execute query");
+		}
 
 		if($statement->rowCount() === 0) {
 			throw new Exception("interviewer still unavailable at the moment, can be deleted only when available");
 		}
 
-		# TODO delete interviews related to iwer_id with cascade?
-		# since the interviewer was available, no interviewee was unavailable due to
-		# this interviewer so cascade is just enough
-
-		if($statement === false) {
-			throw new Exception("failed to execute query");
+		if(($iru = $statement->fetch()['image_resource_url']) !== SecretaryAddInterviewer::iwerImageResourceUrlPlaceholder()) {
+			if(file_exists($_SERVER['DOCUMENT_ROOT'] . $iru)) {
+				unlink($_SERVER['DOCUMENT_ROOT'] . $iru);
+			}
 		}
 	}
 
@@ -628,6 +683,10 @@ class Postgres implements Database, DatabaseAdmin {
 					if($this->pdo->inTransaction()) {
 						$this->pdo->rollBack();
 					}
+				}
+
+				if($result !== true) { // amazing last minute fix
+					$update_request->when_dispatch_fails();
 				}
 
 				return $result;

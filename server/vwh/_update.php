@@ -127,7 +127,7 @@ $parameters = [
 							$update_known,
 							$_POST['iwer_info_dialog_name'],
 							$_POST['iwer_info_dialog_table'],
-							'/resources/images/placeholder_interviewer.svg', # TODO include from $_FILES
+							(isset($_FILES['iwer_info_dialog_image']) && is_array($_FILES['iwer_info_dialog_image']) ? $_FILES['iwer_info_dialog_image'] : null),
 							$_POST['iwer_info_dialog_jobs'],
 						);
 					}
@@ -140,7 +140,7 @@ $parameters = [
 							intval($_POST['iwer_info_dialog_id']),
 							$_POST['iwer_info_dialog_name'],
 							$_POST['iwer_info_dialog_table'],
-							'/resources/images/placeholder_interviewer.svg', # TODO include from $_FILES
+							(isset($_FILES['iwer_info_dialog_image']) && is_array($_FILES['iwer_info_dialog_image']) ? $_FILES['iwer_info_dialog_image'] : null),
 							$_POST['iwer_info_dialog_jobs'],
 						);
 					}
