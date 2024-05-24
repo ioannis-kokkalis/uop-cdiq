@@ -1,12 +1,12 @@
 <?php
 
-# TODO we need HTTPS for the password sending
-
 require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
 
-$a = new AssemblerOperate('Authorization Required');
+$a = new AssemblerOperate('Authorize');
 
-$a->operator_clear();
+if(isset($_GET['unauthorize'])) {
+	$a->operator_clear();
+}
 
 $operator_challenge_failed = false;
 

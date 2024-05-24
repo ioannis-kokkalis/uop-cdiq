@@ -33,7 +33,7 @@ $parameters = [
 				$db->update_handle(new SystemCallingToDecision(
 					$db->update_happened_recent(),
 					CALLING_TIME_IN_SECONDS
-				));
+				)); # don't care on failure
 			}
 
 			$update_known = intval($_GET[Parameter::AM_I_UP_TO_DATE->value]);
@@ -83,12 +83,6 @@ $parameters = [
 
 			require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
 
-			if( AssemblerOperate::operator_is(Operator::Secretary) === false
-				&& AssemblerOperate::operator_is(Operator::Gatekeeper) === false ) {
-				echo "unauthorized access";
-				return;
-			}
-
 			$form_submission_preprocess = (function() : UpdateRequest | string {
 				if(isset($_POST) === false) {
 					return "no POST data found";
@@ -99,120 +93,133 @@ $parameters = [
 				$update_request = null;
 				
 				try {
-					if(
-						isset($_POST['form_button_update'])
-						&& isset($_POST['iwee_select']) && $_POST['iwee_select'] === 'null'
-						&& isset($_POST['iwee_filter']) && $_POST['iwee_filter'] !== ''
-					) {
-						$update_request = new SecretaryAddInterviewee(
-							$update_known,
-							$_POST['iwee_filter']
-						);
-					}
-					else if (
-						isset($_POST['iwee_button_delete'])
-						&& isset($_POST['iwee_select']) && $_POST['iwee_select'] !== 'null'
-						&& intval($_POST['iwee_select']) !== 0
-					) {
-						$update_request = new SecretaryDeleteInterviewee(
-							$update_known,
-							intval($_POST['iwee_select'])
-						);
-					}
-					else if(
-						isset($_POST['iwer_info_dialog_confirm'])
-						&& isset($_POST['iwer_info_dialog_id']) && $_POST['iwer_info_dialog_id'] === 'null'
-					) {
-						$update_request = new SecretaryAddInterviewer(
-							$update_known,
-							$_POST['iwer_info_dialog_name'],
-							$_POST['iwer_info_dialog_table'],
-							(isset($_FILES['iwer_info_dialog_image']) && is_array($_FILES['iwer_info_dialog_image']) ? $_FILES['iwer_info_dialog_image'] : null),
-							$_POST['iwer_info_dialog_jobs'],
-						);
-					}
-					else if(
-						isset($_POST['iwer_info_dialog_confirm'])
-						&& isset($_POST['iwer_info_dialog_id']) && $_POST['iwer_info_dialog_id'] !== 'null'
-					) {
-						$update_request = new SecretaryEditInterviewer(
-							$update_known,
-							intval($_POST['iwer_info_dialog_id']),
-							$_POST['iwer_info_dialog_name'],
-							$_POST['iwer_info_dialog_table'],
-							(isset($_FILES['iwer_info_dialog_image']) && is_array($_FILES['iwer_info_dialog_image']) ? $_FILES['iwer_info_dialog_image'] : null),
-							$_POST['iwer_info_dialog_jobs'],
-						);
-					}
-					else if(
-						isset($_POST['iwer_info_dialog_delete'])
-						&& isset($_POST['iwer_info_dialog_id']) && $_POST['iwer_info_dialog_id'] !== 'null'
-					) {
-						$update_request = new SecretaryDeleteInterviewer(
-							$update_known,
-							intval($_POST['iwer_info_dialog_id'])
-						);
-					}
-					else if(
-						isset($_POST['form_button_update'])
-						&& isset($_POST['iwee_select']) && $_POST['iwee_select'] !== 'null'
-					) {
-						$update_request = new SecretaryEnqueueDequeue(
-							$update_known,
-							intval($_POST['iwee_select']),
-							...(isset($_POST['interviewers']) ? $_POST['interviewers'] : [])
-						);
-					}
-					else if(
-						isset($_POST['iwee_button_active_inactive'])
-						&& isset($_POST['iwee_select']) && $_POST['iwee_select'] !== 'null'
-					) {
-						$update_request = new SecretaryActiveInactiveFlipInterviewee(
-							$update_known,
-							intval($_POST['iwee_select'])
-						);
+					$unauthorized = true;
+
+					if(AssemblerOperate::operator_is(Operator::Secretary) === true) {
+						$unauthorized = false;
+
+						if(
+							isset($_POST['form_button_update'])
+							&& isset($_POST['iwee_select']) && $_POST['iwee_select'] === 'null'
+							&& isset($_POST['iwee_filter']) && $_POST['iwee_filter'] !== ''
+						) {
+							$update_request = new SecretaryAddInterviewee(
+								$update_known,
+								$_POST['iwee_filter']
+							);
+						}
+						else if (
+							isset($_POST['iwee_button_delete'])
+							&& isset($_POST['iwee_select']) && $_POST['iwee_select'] !== 'null'
+							&& intval($_POST['iwee_select']) !== 0
+						) {
+							$update_request = new SecretaryDeleteInterviewee(
+								$update_known,
+								intval($_POST['iwee_select'])
+							);
+						}
+						else if(
+							isset($_POST['iwer_info_dialog_confirm'])
+							&& isset($_POST['iwer_info_dialog_id']) && $_POST['iwer_info_dialog_id'] === 'null'
+						) {
+							$update_request = new SecretaryAddInterviewer(
+								$update_known,
+								$_POST['iwer_info_dialog_name'],
+								$_POST['iwer_info_dialog_table'],
+								(isset($_FILES['iwer_info_dialog_image']) && is_array($_FILES['iwer_info_dialog_image']) ? $_FILES['iwer_info_dialog_image'] : null),
+								$_POST['iwer_info_dialog_jobs'],
+							);
+						}
+						else if(
+							isset($_POST['iwer_info_dialog_confirm'])
+							&& isset($_POST['iwer_info_dialog_id']) && $_POST['iwer_info_dialog_id'] !== 'null'
+						) {
+							$update_request = new SecretaryEditInterviewer(
+								$update_known,
+								intval($_POST['iwer_info_dialog_id']),
+								$_POST['iwer_info_dialog_name'],
+								$_POST['iwer_info_dialog_table'],
+								(isset($_FILES['iwer_info_dialog_image']) && is_array($_FILES['iwer_info_dialog_image']) ? $_FILES['iwer_info_dialog_image'] : null),
+								$_POST['iwer_info_dialog_jobs'],
+							);
+						}
+						else if(
+							isset($_POST['iwer_info_dialog_delete'])
+							&& isset($_POST['iwer_info_dialog_id']) && $_POST['iwer_info_dialog_id'] !== 'null'
+						) {
+							$update_request = new SecretaryDeleteInterviewer(
+								$update_known,
+								intval($_POST['iwer_info_dialog_id'])
+							);
+						}
+						else if(
+							isset($_POST['form_button_update'])
+							&& isset($_POST['iwee_select']) && $_POST['iwee_select'] !== 'null'
+						) {
+							$update_request = new SecretaryEnqueueDequeue(
+								$update_known,
+								intval($_POST['iwee_select']),
+								...(isset($_POST['interviewers']) ? $_POST['interviewers'] : [])
+							);
+						}
+						else if(
+							isset($_POST['iwee_button_active_inactive'])
+							&& isset($_POST['iwee_select']) && $_POST['iwee_select'] !== 'null'
+						) {
+							$update_request = new SecretaryActiveInactiveFlipInterviewee(
+								$update_known,
+								intval($_POST['iwee_select'])
+							);
+						}
+
 					}
 
-					# ---
+					if(AssemblerOperate::operator_is(Operator::Gatekeeper) === true) {
+						$unauthorized = false;
+						
+						if(
+							isset($_POST['button_to_happening'])
+							&& isset($_POST['input_interview_id'])
+						) {
+							$update_request = new GatekeeperCallingOrDecisionToHappening(
+								$update_known,
+								intval($_POST['input_interview_id'])
+							);
+						}
+						else if(
+							isset($_POST['button_to_completed'])
+							&& isset($_POST['input_interview_id'])
+						) {
+							$update_request = new GatekeeperHappeningToCompleted(
+								$update_known,
+								intval($_POST['input_interview_id'])
+							);
+						}
+						else if(
+							isset($_POST['button_to_dequeue'])
+							&& isset($_POST['input_interview_id'])
+						) {
+							$update_request = new GatekeeperCallingOrDecisionOrHappeningToDequeued(
+								$update_known,
+								intval($_POST['input_interview_id'])
+							);
+						}
+						else if(
+							isset($_POST['button_active_inactive'])
+							&& isset($_POST['input_interviewer_id'])
+						) {
+							$update_request = new GatekeeperActiveInactiveFlipInterviewer(
+								$update_known,
+								intval($_POST['input_interviewer_id'])
+							);
+						}
+					}
 
-					else if(
-						isset($_POST['button_to_happening'])
-						&& isset($_POST['input_interview_id'])
-					) {
-						$update_request = new GatekeeperCallingOrDecisionToHappening(
-							$update_known,
-							intval($_POST['input_interview_id'])
-						);
-					}
-					else if(
-						isset($_POST['button_to_completed'])
-						&& isset($_POST['input_interview_id'])
-					) {
-						$update_request = new GatekeeperHappeningToCompleted(
-							$update_known,
-							intval($_POST['input_interview_id'])
-						);
-					}
-					else if(
-						isset($_POST['button_to_dequeue'])
-						&& isset($_POST['input_interview_id'])
-					) {
-						$update_request = new GatekeeperCallingOrDecisionOrHappeningToDequeued(
-							$update_known,
-							intval($_POST['input_interview_id'])
-						);
-					}
-					else if(
-						isset($_POST['button_active_inactive'])
-						&& isset($_POST['input_interviewer_id'])
-					) {
-						$update_request = new GatekeeperActiveInactiveFlipInterviewer(
-							$update_known,
-							intval($_POST['input_interviewer_id'])
-						);
+					if($unauthorized === true) {
+						return 'unauthorized access';
 					}
 
-					return $update_request === null ? 'unknown request' : $update_request;
+					return $update_request ?? 'unknown request';
 				}
 				catch(Throwable $th) {
 					return $th->getMessage();
