@@ -30,14 +30,14 @@ services:
       SERVER_SSL_CERT_FILE: ${SERVER_SSL_CERT_FILE}
       SERVER_SSL_PKEY_FILE: ${SERVER_SSL_PKEY_FILE}
     volumes:
-      - ./server/vwh:/var/www/html/
+       - ./server/vwh:/var/www/html/
 
   api:
     build:
       context: ./suggestions-api
       dockerfile: DockerfileAPI
     ports:
-      - 8000:8000
+      - "8000:8000"
     volumes:
       - ./suggestions-api/src:/app
     command: uvicorn api:app --host 0.0.0.0 --port 8000 --workers 1

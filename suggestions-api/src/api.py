@@ -9,6 +9,7 @@ from Translator import Translator
 from langdetect import detect
 from queue import Queue
 from fastapi.responses import JSONResponse
+from fastapi import Request
 
 app = FastAPI()
 
@@ -30,7 +31,7 @@ logging.info("Loading the classifier...")
 classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 logging.info("Done!")
 translator = Translator()
-candidate_labels = ['finance', 'healthcare', 'information & technology', 'business management']
+candidate_labels = ['finance', 'information & technology', 'business management']
 
 
 
@@ -164,3 +165,34 @@ async def results(user_id: str):
         raise HTTPException(status_code=404, detail="Result not found")
 
 
+@app.post("/classify_job_descriptions")
+async def classify_job_descriptions(request: Request):
+    data = await request.json()
+    results = []
+
+    for item in data:
+        job_id = item['id']
+        description = item['description']
+
+        # Preprocess the text
+        text_preprocessor = TextPreprocessor(description)
+        preprocessed_text = text_preprocessor.preprocess_text()
+        if not preprocessed_text:
+            raise HTTPException(status_code=500, detail="Failed to preprocess the text")
+
+        # Summarize the text
+        summary = summarizer(preprocessed_text, max_length=100, min_length=30)
+        if not summary:
+            raise HTTPException(status_code=500, detail="Failed to summarize the text")
+
+        # Classify the summary
+        output = classifier(summary[0]['summary_text'], candidate_labels)
+        if not output:
+            raise HTTPException(status_code=500, detail="Failed to classify the summary")
+
+        # Get the tag with the highest score
+        best_tag = output['labels'][0]
+
+        results.append({"id": job_id, "tag": best_tag})
+
+    return JSONResponse(content=results)

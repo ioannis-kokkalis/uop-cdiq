@@ -42,7 +42,7 @@ if(isset($_POST['submit'])) {
 				CURLOPT_URL => "http://api:8000/classify_resume",
 				CURLOPT_RETURNTRANSFER => true,
 				CURLOPT_ENCODING => "",
-				CURLOPT_MAXREDIRS => 10,
+			    CURLOPT_MAXREDIRS => 10,
 				CURLOPT_TIMEOUT => 0,
 				CURLOPT_FOLLOWLOCATION => true,
 				CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
@@ -53,6 +53,27 @@ if(isset($_POST['submit'])) {
 					"Content-Type: multipart/form-data",
 				],
 			]);
+
+			#curl_setopt_array($curl, [
+            #    CURLOPT_PORT => 8000,
+            #    CURLOPT_URL => "http://api:8000/classify_job_descriptions",
+            #    CURLOPT_RETURNTRANSFER => true,
+            #    CURLOPT_ENCODING => "",
+            #    CURLOPT_MAXREDIRS => 10,
+            #    CURLOPT_TIMEOUT => 0,
+            #    CURLOPT_FOLLOWLOCATION => true,
+            #    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            #    CURLOPT_CUSTOMREQUEST => "POST",
+            #    CURLOPT_POSTFIELDS => json_encode([
+            #        ["id" => "1", "description" => "Software engineer needed with experience in Python and AI."],
+            #        ["id" => "2", "description" => "Marketing manager with experience in digital marketing and SEO."]
+            #    ]),
+            #    CURLOPT_HTTPHEADER => [
+            #        "accept: application/json",
+            #        "Content-Type: application/json",
+            #    ],
+            #]);
+
 
 			$response = curl_exec($curl);
 			curl_close($curl);
