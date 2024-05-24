@@ -537,16 +537,21 @@ class GatekeeperHappeningToCompleted extends UpdateRequest {
 };
 
 interface Database {
+
 	/**
 	 * @return string of the operator type when the password matches
 	 * @return false when the password has no match
 	 */
-	public function operator_mapping(string $password) : string|false;
+	public function operator_mapping(string $password, string &$timestamp) : string|false;
+
+	public function operator_still_alive(string $timestamp) : bool;
+	
 	/**
 	 * @return true on success
 	 * @return string on failure with the reason
 	 */
 	public function update_handle(UpdateRequest $update_request) : true | string;
+	
 	/**
 	 * @return int id
 	 */
@@ -614,9 +619,9 @@ class Postgres implements Database, DatabaseAdmin {
 	// ||
 	// \/ methods of Database interface
 	
-	public function operator_mapping(string $password) : string|false {
-		return $this->connect(true, function() use ($password) {
-			$result = $this->pdo->query("SELECT type, pass FROM operator;");
+	public function operator_mapping(string $password, string &$timestamp) : string|false {
+		return $this->connect(true, function() use ($password, &$timestamp) {
+			$result = $this->pdo->query("SELECT type, pass, ts FROM operator;");
 
 			if ($result === false || empty($entries = $result->fetchAll())) {
 				return false;
@@ -624,11 +629,20 @@ class Postgres implements Database, DatabaseAdmin {
 
 			foreach ($entries as $entry) {
 				if (password_verify($password, $entry['pass'])) {
+					$timestamp = $entry['ts'];
 					return $entry['type'];
 				}
 			}
 
 			return false;
+		});
+	}
+
+	public function operator_still_alive(string $timestamp) : bool {
+		return $this->connect(true, function() use ($timestamp) {
+			$result = $this->pdo->query("SELECT 1 FROM operator WHERE ts = '{$timestamp}';");
+
+			return $result !== false && !empty($result->fetchAll());
 		});
 	}
 
@@ -966,7 +980,9 @@ class Postgres implements Database, DatabaseAdmin {
 					
 					pass VARCHAR(255) NOT NULL,
 					type VARCHAR(255) NOT NULL,
-					reminder VARCHAR(255) NOT NULL
+					reminder VARCHAR(255) NOT NULL,
+
+					ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- should by something unique-random, it does the job for now
 				);",
 
 				# ---
@@ -1163,9 +1179,9 @@ class Postgres implements Database, DatabaseAdmin {
 }
 
 function database() : Database {
-	return new Postgres(require_once __DIR__ . '/config.php');
+	return new Postgres(require __DIR__ . '/config.php');
 }
 
 function database_admin() : DatabaseAdmin {
-	return new Postgres(require_once __DIR__ . '/config.php');
+	return new Postgres(require __DIR__ . '/config.php');
 }

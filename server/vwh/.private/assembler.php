@@ -96,7 +96,7 @@ enum Operator : string {
 
 class AssemblerOperate extends Assembler {
 
-	private static string $SESSION_OPERATOR_INDEX = "session_operator_index";
+	private static string $SESSION_OPERATOR_ARRAY = "session_operator_array_#@)_SASD+)K";
 
 	public function __construct(string $body_header_title) {
 		parent::__construct($body_header_title);
@@ -104,37 +104,63 @@ class AssemblerOperate extends Assembler {
 		$this->head_title = 'Operate: ' . $this->head_title;
 
 		session_start();
+
+		if(isset($_SESSION[AssemblerOperate::$SESSION_OPERATOR_ARRAY]) === false
+			|| is_array($_SESSION[AssemblerOperate::$SESSION_OPERATOR_ARRAY]) === false
+		) {
+			$_SESSION[AssemblerOperate::$SESSION_OPERATOR_ARRAY] = [];
+		}
 	}
 
 	protected function body_header_nav() : void {
 		?>
 		<a href="/">Home</a>
-		<a href="/costas/vasilakis.php">Operate</a>
+		<a href="/costas/vasilakis.php">Authorize</a>
+		<a href="/costas/vasilakis.php?unauthorize">Unauthorize</a>
+		<?php
+			$operators = [];
+
+			if($this->operator_is(Operator::Secretary)) {
+				array_push($operators, '<a href="/costas/'.Operator::Secretary->value.'.php">Secretary</a>');
+			}
+			if($this->operator_is(Operator::Gatekeeper)) {
+				array_push($operators, '<a href="/costas/'.Operator::Gatekeeper->value.'.php">Gatekeeper</a>');
+			}
+			
+			if(sizeof($operators) > 0) {
+				echo '<hr>' . implode($operators);
+			}
+		?>
 		<?php
 	}
 
 	public function operator_challenge(string $password) : false {
 		require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/database.php';
-		$db = database();
 
-		$type = $db->operator_mapping($password) ?? '';
+		$ts = '';
+
+		$type = database()->operator_mapping($password, $ts) ?? '';
 		$type = Operator::tryFrom($type);
 
 		if( $type === null ) {
 			return false;
 		}
 
-		$_SESSION[AssemblerOperate::$SESSION_OPERATOR_INDEX] = $type;
+		$_SESSION[AssemblerOperate::$SESSION_OPERATOR_ARRAY][$type->value] = $ts;
 		header("Location: /costas/{$type->value}.php");
 		exit;
 	}
 
 	public static function operator_is(Operator $operator) : bool {
+		require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/database.php';
+		
 		if (session_status() === PHP_SESSION_NONE) {
 			session_start();
 		}
-		return isset($_SESSION[AssemblerOperate::$SESSION_OPERATOR_INDEX]) === true
-			&& $_SESSION[AssemblerOperate::$SESSION_OPERATOR_INDEX] === $operator;
+
+		return isset($_SESSION[AssemblerOperate::$SESSION_OPERATOR_ARRAY]) === true
+			&& isset($_SESSION[AssemblerOperate::$SESSION_OPERATOR_ARRAY][$operator->value]) === true
+			&& database()->operator_still_alive($_SESSION[AssemblerOperate::$SESSION_OPERATOR_ARRAY][$operator->value]) === true;
 	}
 
 	public function operator_ensure(Operator $operator) {
@@ -145,7 +171,8 @@ class AssemblerOperate extends Assembler {
 	}
 
 	function operator_clear() {
-		unset($_SESSION[AssemblerOperate::$SESSION_OPERATOR_INDEX]);
+		unset($_SESSION[AssemblerOperate::$SESSION_OPERATOR_ARRAY]);
+		$_SESSION[AssemblerOperate::$SESSION_OPERATOR_ARRAY] = [];
 	}
 
 }
