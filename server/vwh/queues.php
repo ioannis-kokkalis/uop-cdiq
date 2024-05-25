@@ -1,28 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="/style/main.css">
-	<title>UoP CDIQ 2024</title>
-</head>
-<body>
-	<?php include $_SERVER['DOCUMENT_ROOT'] . '/.private/components/navigation.php'; ?>
+<?php
 
-	<hr>
+require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
 
-	<header>
-		<h1><center>Interview Queues Currently</center></h1>
-	</header>
+$a = new Assembler('Interviews');
 
-	<hr>
+$a->body_main = function() { ?>
 
-	<main>
-		<!-- TODO ask database for the queues -->
-	</main>
+	<div id="container_interviewers" class="container_interviewers">
+		<p id="no_interviewers_message">No Interviewers in the system.</p>
+	</div>
 
-	<hr>
+	<script src="/script/utilities.js"></script>
+	<script src="/script/short_polling.js"></script>
+	<script src="/script/queues.js"></script>
+	<script>
+		// TODO move it back to 5 seconds
+		short_polling(2 /* seconds */, /* for */ 'queues', /* to retrieve */ (data) => {
+			update(data);
+		});
+	</script>
+<?php };
 
-	<?php include $_SERVER['DOCUMENT_ROOT'] . '/.private/components/footer.php'; ?>
-</body>
-</html>
+$a->assemble();

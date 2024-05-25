@@ -1,5 +1,3 @@
-version: "3"
-
 services:
   dbms:
     build:
@@ -8,7 +6,6 @@ services:
     environment:
       POSTGRES_USER: ${DBMS_USERNAME}
       POSTGRES_PASSWORD: ${DBMS_PASSWORD}
-      POSTGRES_DB: ${DBMS_DATABASE}
     volumes:
       - ./dbms/vlpd:/var/lib/postgresql/data
 
@@ -17,14 +14,21 @@ services:
       - dbms
     build:
       context: ./server
-      dockerfile: Dockerfile
+      args:
+        SERVER_SSL_CERT_FILE: ${SERVER_SSL_CERT_FILE}
+        SERVER_SSL_PKEY_FILE: ${SERVER_SSL_PKEY_FILE}
+      dockerfile: Dockerfile 
     ports:
-      - 8124:80
+      - 80:80
+      - 443:443
     environment:
-       DB_HOST: dbms
-       DB_USERNAME: ${DBMS_USERNAME}
-       DB_PASSWORD: ${DBMS_PASSWORD}
-       DB_NAME: ${DBMS_DATABASE}
+      DB_HOST: dbms
+      DB_USERNAME: ${DBMS_USERNAME}
+      DB_PASSWORD: ${DBMS_PASSWORD}
+      DB_NAME: ${DBMS_DATABASE}
+      SERVER_NAME: ${SERVER_NAME}
+      SERVER_SSL_CERT_FILE: ${SERVER_SSL_CERT_FILE}
+      SERVER_SSL_PKEY_FILE: ${SERVER_SSL_PKEY_FILE}
     volumes:
        - ./server/vwh:/var/www/html/
 

@@ -1,0 +1,14 @@
+:root {
+	--color-white: rgb(255, 255, 255);
+	--color-black: rgb(0, 0, 0);
+	
+	--color-primary: rgb(69, 103, 255);
+	--color-accent: rgb(241, 90, 37);
+
+	--color-status--unavailable: rgb(102, 102, 102);
+	--color-status--available: rgb(0, 189, 196);
+	--color-status--calling: rgb(0, 183, 46);
+	--color-status--decision: rgb(220, 117, 0);
+	--color-status--happening: rgb(202, 24, 1);
+	--color-status--completed: rgb(145, 0, 150);
+}
