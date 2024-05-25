@@ -8,6 +8,173 @@ $a->operator_ensure(Operator::Secretary);
 
 // ---
 
+if (isset($_GET['interviewer_id'])) { // interviewer job positions management
+	// TODO is funky, doesn't care about updates, can break
+	// we will be using it carefully, it is a rush build
+
+	$interviewer_id = null;
+
+	function something_went_wrong() {
+		global $interviewer_id;
+		header("Location: /costas/secretary.php?err".($interviewer_id !== 'null' ? "&interviewer_id={$interviewer_id}" : ''));
+		exit(0);
+	};
+
+	if(($interviewer_id = $_GET['interviewer_id'] ?? 'null') === 'null') {
+		something_went_wrong();
+	}
+
+	require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/database.php';
+
+	$db = database_jobpositions();
+
+	$clear_resubmission = true;
+
+	if(isset($_POST) && isset($_POST['submit_add_new_position']) === true) {
+
+		$new_position_title = $_POST['new_position_title'] ?? false;
+		$new_position_description = $_POST['new_position_description'] ?? false;
+		
+		if($new_position_title === false || $new_position_description === false) {
+			something_went_wrong();
+		}
+		
+		$interviewer_id = intval($interviewer_id);
+		$new_position_title = trim($new_position_title);
+		$new_position_description = trim($new_position_description);
+
+		if($new_position_title === ''
+			|| $new_position_description === ''
+			|| $db->insert_job($new_position_title, $new_position_description, $interviewer_id) === false
+		) {
+			something_went_wrong();
+		}
+	}
+	else if(isset($_POST) && isset($_POST['submit_delete'])
+		&& isset($_POST['job_id']) && $_POST['job_id'] !== 'null'
+	) {
+		if($db->delete_job(intval($_POST['job_id'])) === false) {
+			something_went_wrong();
+		}
+		
+	}
+	else if(isset($_POST) && isset($_POST['evaluate_tags'])) {
+		$interviewer = $db->retrieve_jobs_of($interviewer_id, true);
+
+		if($interviewer === false || is_array($interviewer) === false) {
+			something_went_wrong();
+		}
+		
+		$jobs_id_description = $interviewer['jobs'];
+
+		foreach ($jobs_id_description as &$job) {
+			unset($job['id_interviewer']);
+			unset($job['tag']);
+			$job['description'] = implode(" ", [$job['title'], $job['description']]);
+			unset($job['title']);
+		}
+
+		if(sizeof($jobs_id_description) <= 0) {
+			something_went_wrong();
+		}
+
+		// $curl = curl_init();
+
+		// curl_setopt_array($curl, [
+		// 	CURLOPT_URL => "https://api/kati",
+		// 	CURLOPT_RETURNTRANSFER => true,
+		// 	CURLOPT_ENCODING => "",
+		// 	CURLOPT_MAXREDIRS => 10,
+		// 	CURLOPT_TIMEOUT => 30,
+		// 	CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+		// 	CURLOPT_CUSTOMREQUEST => "POST",
+		// 	CURLOPT_POSTFIELDS => json_encode($jobs_id_description),
+		// 	CURLOPT_HTTPHEADER => [
+		// 		"Content-Type: application/json"
+		// 	],
+		// ]);
+
+		// $response = curl_exec($curl);
+		// if (curl_error($curl)) {
+		// 	something_went_wrong();
+		// }
+
+		// curl_close($curl);
+
+		$response = '[{"id":"15","tag":"information & technology"},{"id":"2","tag":"information & technology"}, {"id":"16","tag":"ggg"}]';
+
+		$response = json_decode($response, true);
+
+		$tag_job_ids = [];
+
+		foreach ($response as $key => $job) {
+			if(isset($tag_job_ids[$job['tag']]) === false) {
+				$tag_job_ids[$job['tag']] = [];
+			}
+
+			array_push($tag_job_ids[$job['tag']], $job['id']);
+		}
+
+		if($db->update_jobs_tags($tag_job_ids) === false) {
+			something_went_wrong();
+		}
+	}
+	else {
+		$clear_resubmission = false;
+	}
+
+	if($clear_resubmission === true) {
+		header("Location: /costas/secretary.php?interviewer_id=".$interviewer_id);
+		exit(0);
+	}
+
+	$interviewer = $db->retrieve_jobs_of($interviewer_id);
+	
+	if($interviewer === false || is_array($interviewer) === false) {
+		something_went_wrong();
+	}
+
+	$a->body_main = function () use ($interviewer) { ?>
+		<form method="POST" action="/costas/secretary.php?interviewer_id=<?=$interviewer['info']['id']?>"
+		class="form-jobpositions" onsubmit="return confirm('Are you sure?');">
+			
+			<h1 class="info">Job Positions of "<?=$interviewer['info']['name']?>" at Table <?=$interviewer['info']['table_number']?></h1>
+
+			<button type="submit" id="evaluate_tags" name="evaluate_tags">Evaluate Tags (might take some seconds)</button>
+
+			<input type="hidden" id="interviewer_id" name="interviewer_id" value="<?=$interviewer['info']['id']?>">
+			<input type="hidden" id="job_id" name="job_id" value="null">
+			
+			<?php
+				foreach ($interviewer['jobs'] as $job) {
+					?> <fieldset>
+							<legend><?=$job['title']?> (<?=$job['tag'] ?? 'untagged'?>)</legend>
+							<textarea name="content" rows="4" style="resize: none;" disabled><?=$job['description']?></textarea>
+							<button id="submit_delete" name="submit_delete" onclick="
+								document.getElementById('job_id').value = <?=$job['id']?>;
+							">Delete</button>
+						</fieldset>
+					<?php
+				}
+			?>
+
+			<fieldset>
+				<legend>New Position</legend>
+				<input type="text" id="new_position_title" name="new_position_title" placeholder="Position title...">
+				<textarea id="new_position_description" name="new_position_description" placeholder="Position desription..." rows="4" style="resize: none;"></textarea>
+			</fieldset>
+
+			<button type="submit" id="submit_add_new_position" name="submit_add_new_position">Add New Position</button>
+		</form>
+	<?php };
+
+	$a->assemble();
+
+	exit(0);
+}
+
+// ---
+
 $a->body_main = function() { ?>
 
 	<!-- TODO dialog with HELP information like
@@ -86,9 +253,10 @@ $a->body_main = function() { ?>
 				<input type="file" id="iwer_info_dialog_image" name="iwer_info_dialog_image" accept="image/*">
 			</label>
 
-			<label for="iwer_info_dialog_jobs">Jobs (seperated at newline):
-				<textarea id="iwer_info_dialog_jobs" name="iwer_info_dialog_jobs" rows=7 style="resize: none;  text-wrap: nowrap;"></textarea>
-			</label>
+			<input type="button" value="Job Positions" onclick="
+				window.location.href = '/costas/secretary.php?interviewer_id=' + encodeURIComponent(document.getElementById('iwer_info_dialog_id').value);
+				return;
+			">
 
 			<div class="horizontal_buttons">
 				<input type="submit" id="iwer_info_dialog_delete" name="iwer_info_dialog_delete" value="Delete" formnovalidate>

@@ -206,14 +206,12 @@ class SecretaryAddInterviewer extends UpdateRequest {
 	protected readonly string $iwer_name;
 	protected readonly string $iwer_table;
 	protected readonly string $iwer_image_resource_url;
-	protected readonly string $iwer_jobs;
 
 	public function __construct(
 		int $update_id_known,
 		string $iwer_name,
 		string $iwer_table,
 		?array $iwer_image_file,
-		string $iwer_jobs,
 	) {
 		parent::__construct($update_id_known);
 		
@@ -237,16 +235,6 @@ class SecretaryAddInterviewer extends UpdateRequest {
 
 		// ===
 
-		$iwer_jobs = $jobs = trim($iwer_jobs);
-		# TODO sanitazation and validation of "table"
-		if($jobs !== $iwer_jobs) {
-			throw new InvalidArgumentException("invalid jobs provided");
-		}
-
-		$this->iwer_jobs = $jobs;
-
-		// ===
-
 		if($iwer_image_file !== null && $iwer_image_file['error'] !== UPLOAD_ERR_NO_FILE) {
 			if($iwer_image_file['error'] !== UPLOAD_ERR_OK) {
 				throw new InvalidArgumentException("invalid image provided, probably too big (error code " . $iwer_image_file['error'] . ")");
@@ -265,8 +253,8 @@ class SecretaryAddInterviewer extends UpdateRequest {
 
 	protected function process(PDO $pdo): void {
 		$statement = $pdo->query("INSERT
-			INTO interviewer (name, image_resource_url, table_number, jobs, active, available)
-			VALUES ('{$this->iwer_name}', '{$this->iwer_image_resource_url}', '{$this->iwer_table}', '{$this->iwer_jobs}', true, true);
+			INTO interviewer (name, image_resource_url, table_number, active, available)
+			VALUES ('{$this->iwer_name}', '{$this->iwer_image_resource_url}', '{$this->iwer_table}', true, true);
 		");
 
 		if($statement === false) {
@@ -296,9 +284,8 @@ class SecretaryEditInterviewer extends SecretaryAddInterviewer {
 		string $iwer_name,
 		string $iwer_table,
 		?array $iwer_image_file,
-		string $iwer_jobs,
 	) {
-		parent::__construct($update_id_known, $iwer_name, $iwer_table, $iwer_image_file, $iwer_jobs);
+		parent::__construct($update_id_known, $iwer_name, $iwer_table, $iwer_image_file);
 
 		$this->iwer_id = $iwer_id;
 	}
@@ -329,8 +316,7 @@ class SecretaryEditInterviewer extends SecretaryAddInterviewer {
 			SET
 				name = '{$this->iwer_name}',
 				image_resource_url = '{$image_url_update}',
-				table_number = '{$this->iwer_table}',
-				jobs = '{$this->iwer_jobs}'
+				table_number = '{$this->iwer_table}'
 			WHERE
 				id = {$this->iwer_id}
 			;
@@ -572,11 +558,21 @@ interface DatabaseAdmin {
 	public function operator_remove(int|bool $id) : bool;
 }
 
+interface DatabaseJobPositions {
+	public function retrieve_jobs_of(int $interviewer_id, bool $untagged_only = false) : array | false;
+
+	public function insert_job(string $title, string $description, int $interviewer_id) : bool;
+
+	public function delete_job(int $id) : bool;
+
+	public function update_jobs_tags(array $jobs_id_tag) : bool;
+}
+
 class UpdateHandleExpectedException extends Exception {}
 
 class UpdateHandleUnexpectedException extends Exception {}
 
-class Postgres implements Database, DatabaseAdmin {
+class Postgres implements Database, DatabaseAdmin, DatabaseJobPositions {
 
 	private array $conf;
 	private ?PDO $pdo;
@@ -1002,10 +998,20 @@ class Postgres implements Database, DatabaseAdmin {
 					name VARCHAR(255) NOT NULL,
 					image_resource_url VARCHAR(255) NOT NULL,
 					table_number VARCHAR(255),
-					jobs TEXT,
 
 					active BOOLEAN NOT NULL,
 					available BOOLEAN NOT NULL
+				);",
+
+				"CREATE TABLE IF NOT EXISTS job (
+					id SERIAL PRIMARY KEY,
+					
+					title TEXT,
+					description TEXT,
+
+					tag VARCHAR(64) DEFAULT NULL,
+
+					id_interviewer INTEGER NOT NULL REFERENCES interviewer(id) ON DELETE CASCADE
 				);",
 
 				"CREATE TABLE IF NOT EXISTS interview (
@@ -1176,6 +1182,138 @@ class Postgres implements Database, DatabaseAdmin {
 			return $this->pdo->query($query) !== false;
 		});
 	}
+
+	// ||
+	// \/ methods of DatabaseJobPositions interface
+
+	public function retrieve_jobs_of(int $interviewer_id, bool $untagged_only = false) : array | false {
+		return $this->connect(true, function () use ($interviewer_id, $untagged_only) {
+			try {
+				$this->pdo->beginTransaction();
+
+				$statement = $this->pdo->query("SELECT id, name, table_number FROM interviewer WHERE id = {$interviewer_id};");
+				
+				if($statement === false) {
+					throw new Exception('failed execute to query');
+				}
+
+				$retrieved['info'] = $statement->fetch();
+
+				# ---
+
+				$statement = $this->pdo->query("SELECT j.*
+					FROM interviewer as i, job as j
+					WHERE i.id = j.id_interviewer
+					AND i.id = {$interviewer_id}
+					".($untagged_only === true ? 'AND j.tag IS NULL' : '')."
+					ORDER BY j.id
+				;");
+
+				if($statement === false) {
+					throw new Exception('failed execute to query');
+				}
+
+				$retrieved['jobs'] = $statement->fetchAll();
+
+				# ---
+
+				$this->pdo->commit();
+
+				return $retrieved;
+			}
+			catch (Throwable $th) {
+				if($this->pdo->inTransaction()) {
+					$this->pdo->rollBack();
+				}
+			}
+			
+			return false;
+		});
+	}
+
+	public function insert_job(string $title, string $description, int $interviewer_id) : bool {
+		return $this->connect(true, function () use ($title, $description, $interviewer_id) {
+			try {
+				$this->pdo->beginTransaction();
+
+				$statement = $this->pdo->prepare("INSERT INTO job (title, description, id_interviewer) VALUES (:title, :description, :interviewer_id)");
+				$statement->bindParam(':title', $title, PDO::PARAM_STR);
+				$statement->bindParam(':description', $description, PDO::PARAM_STR);
+				$statement->bindParam(':interviewer_id', $interviewer_id, PDO::PARAM_INT);
+				
+				if($statement->execute() === false) {
+					throw new Exception('failed execute to query');
+				}
+
+				$this->pdo->commit();
+
+				return true;
+			}
+			catch (Throwable $th) {
+				if($this->pdo->inTransaction()) {
+					$this->pdo->rollBack();
+				}
+			}
+			
+			return false;
+		});
+	}
+
+	public function delete_job(int $id) : bool {
+		return $this->connect(true, function () use ($id) {
+			try {
+				$this->pdo->beginTransaction();
+
+				$statement = $this->pdo->query("DELETE FROM job WHERE id = {$id};");
+				
+				if($statement->execute() === false) {
+					throw new Exception('failed execute to query');
+				}
+
+				$this->pdo->commit();
+
+				return true;
+			}
+			catch (Throwable $th) {
+				if($this->pdo->inTransaction()) {
+					$this->pdo->rollBack();
+				}
+			}
+			
+			return false;
+		});
+	}
+
+	public function update_jobs_tags(array $tag_job_ids) : bool {
+		return $this->connect(true, function () use ($tag_job_ids) {
+			try {
+				$this->pdo->beginTransaction();
+
+				foreach ($tag_job_ids as $tag => $job_ids) {
+					$job_ids = implode(", ", $job_ids);
+
+					$statement = $this->pdo->query("UPDATE job
+						SET tag = '{$tag}' WHERE id IN ({$job_ids})
+					;");
+					
+					if($statement->execute() === false) {
+						throw new Exception('failed execute to query');
+					}
+				}
+				
+				$this->pdo->commit();
+
+				return true;
+			}
+			catch (Throwable $th) {
+				if($this->pdo->inTransaction()) {
+					$this->pdo->rollBack();
+				}
+			}
+			
+			return false;
+		});
+	}
 }
 
 function database() : Database {
@@ -1183,5 +1321,9 @@ function database() : Database {
 }
 
 function database_admin() : DatabaseAdmin {
+	return new Postgres(require __DIR__ . '/config.php');
+}
+
+function database_jobpositions() : DatabaseJobPositions {
 	return new Postgres(require __DIR__ . '/config.php');
 }
