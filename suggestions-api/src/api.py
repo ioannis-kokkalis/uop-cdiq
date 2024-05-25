@@ -123,9 +123,27 @@ async def classify_job_descriptions(job_descriptions: list[dict]):
         description = job['description']
         logging.info(f"Processing job description: {description}")
 
+        translated_text = description.split()
+
         try:
+            if detect(description) == 'el':
+                try:
+                    # Translate the text to English
+                    if len(translated_text) > 1024:
+                        translated_text = ' '.join(translated_text[:1023])
+                        translated_text = translator.translate_large_text_to_english(translated_text)
+                    else:
+                        translated_text = ' '.join(translated_text)
+                        translated_text = translator.translate_to_english(description)
+
+                    logging.info(f"Translated text to English: {translated_text}")
+                except HTTPException as e:
+                    raise HTTPException(status_code=e.status_code, detail=e.detail)
+            else:
+                translated_text = ' '.join(translated_text)
+
             # Preprocess the description
-            text_preprocessor = TextPreprocessor(description)
+            text_preprocessor = TextPreprocessor(translated_text)
             preprocessed_text = text_preprocessor.preprocess_text()
             if not preprocessed_text:
                 raise HTTPException(status_code=500, detail="Failed to preprocess the text")
