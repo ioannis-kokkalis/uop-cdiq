@@ -137,6 +137,7 @@ $a->body_main = function() use (
 		<p>
 		<?php
 			echo $suggestionResult;
+			// echo json_decode($suggestionResult, true);
 		?>
 		</p>
 		<?php

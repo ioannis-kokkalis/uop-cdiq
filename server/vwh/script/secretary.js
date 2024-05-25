@@ -365,7 +365,6 @@ function update(data) {
 					iwer_info_dialog_id.value = interviewer['id'];
 					document.getElementById('iwer_info_dialog_name').value = interviewer['name'];
 					document.getElementById('iwer_info_dialog_table').value = interviewer['table'];
-					document.getElementById('iwer_info_dialog_jobs').value = interviewer['jobs'];
 
 					iwer_button_add.dispatchEvent(new Event("click"));
 					
@@ -386,7 +385,6 @@ function update(data) {
 		interviewer['name'] = iwer_row['name'];
 		interviewer['table'] = iwer_row['table_number'] === '' ? '-' : iwer_row['table_number'];
 		interviewer['image'] = iwer_row['image_resource_url'];
-		interviewer['jobs'] = iwer_row['jobs'];
 		interviewer['active'] = iwer_row['active'];
 		interviewer['available'] = iwer_row['available'];
 

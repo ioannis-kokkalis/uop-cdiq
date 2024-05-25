@@ -127,7 +127,6 @@ $parameters = [
 								$_POST['iwer_info_dialog_name'],
 								$_POST['iwer_info_dialog_table'],
 								(isset($_FILES['iwer_info_dialog_image']) && is_array($_FILES['iwer_info_dialog_image']) ? $_FILES['iwer_info_dialog_image'] : null),
-								$_POST['iwer_info_dialog_jobs'],
 							);
 						}
 						else if(
@@ -140,7 +139,6 @@ $parameters = [
 								$_POST['iwer_info_dialog_name'],
 								$_POST['iwer_info_dialog_table'],
 								(isset($_FILES['iwer_info_dialog_image']) && is_array($_FILES['iwer_info_dialog_image']) ? $_FILES['iwer_info_dialog_image'] : null),
-								$_POST['iwer_info_dialog_jobs'],
 							);
 						}
 						else if(

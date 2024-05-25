@@ -178,6 +178,20 @@ form select {
 	width: 100%;
 }
 
+.form-jobpositions {
+
+	.info {
+		text-align: center;
+		margin: 0;
+	}
+
+	& input[type="text"],
+	& textarea {
+		padding: .5rem;
+	}
+
+}
+
 .horizontal_buttons {
 	display: flex;
 	flex-direction: row;
