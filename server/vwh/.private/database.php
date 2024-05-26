@@ -566,6 +566,8 @@ interface DatabaseJobPositions {
 	public function delete_job(int $id) : bool;
 
 	public function update_jobs_tags(array $jobs_id_tag) : bool;
+
+	public function retrieve_interviewers_and_jobs_with_tags(array $tags) : array | false;
 }
 
 class UpdateHandleExpectedException extends Exception {}
@@ -1304,6 +1306,43 @@ class Postgres implements Database, DatabaseAdmin, DatabaseJobPositions {
 				$this->pdo->commit();
 
 				return true;
+			}
+			catch (Throwable $th) {
+				if($this->pdo->inTransaction()) {
+					$this->pdo->rollBack();
+				}
+			}
+			
+			return false;
+		});
+	}
+
+	public function retrieve_interviewers_and_jobs_with_tags(array $tags) : array | false {
+		return $this->connect(true, function () use ($tags) {
+			try {
+				$this->pdo->beginTransaction();
+
+				$tags = "'".implode("', '", $tags)."'";
+
+				$statement = $this->pdo->query("SELECT
+						i.id, i.name, j.title
+					FROM
+						interviewer as i, job as j
+					WHERE
+						i.id = j.id_interviewer
+						AND j.tag IN ({$tags})
+					ORDER BY i.name, i.id, j.id
+				;");
+
+				if($statement === false) {
+					throw new Exception('failed execute to query');
+				}
+
+				$arr = $statement->fetchAll();
+				
+				$this->pdo->commit();
+
+				return $arr;
 			}
 			catch (Throwable $th) {
 				if($this->pdo->inTransaction()) {
