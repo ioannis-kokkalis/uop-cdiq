@@ -26,3 +26,21 @@ function dialog_create_closable(message) {
 
 	return dialog;
 }
+
+// ---
+
+function qr_generate(url, img) {
+	img.src = 'https://api.qrserver.com/v1/create-qr-code/?data=' + encodeURIComponent(url);
+}
+
+function copy_to_clipboard(text) {
+	navigator.clipboard.writeText(text)
+		.then(
+			function() {
+				alert("Copied!");
+			},
+			function() {
+				alert("Can't Copy!");
+			}
+		);
+}

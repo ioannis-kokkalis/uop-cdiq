@@ -10,6 +10,7 @@ class Assembler {
 
 	public string		$head_title;
 	public Stylesheet 	$head_stylesheet;
+	public string		$body_main_id;
 	public Closure		$body_main;
 
 	public function __construct(string $body_header_title) {
@@ -17,7 +18,11 @@ class Assembler {
 		$this->head_stylesheet = Stylesheet::Main;
 
 		$this->body_header_title = $body_header_title;
+		
+		$this->body_main_id = 'some-main';
 		$this->body_main = function() { ?><p>This page has no content yet.</p><?php };
+
+		session_start();
 	}
 
 	public function assemble() : void {
@@ -62,7 +67,7 @@ class Assembler {
 		
 		<hr>
 
-		<main>
+		<main id="<?=$this->body_main_id?>">
 			<?= call_user_func($this->body_main); ?>
 		</main>
 
@@ -102,8 +107,6 @@ class AssemblerOperate extends Assembler {
 		parent::__construct($body_header_title);
 
 		$this->head_title = 'Operate: ' . $this->head_title;
-
-		session_start();
 
 		if(isset($_SESSION[AssemblerOperate::$SESSION_OPERATOR_ARRAY]) === false
 			|| is_array($_SESSION[AssemblerOperate::$SESSION_OPERATOR_ARRAY]) === false
