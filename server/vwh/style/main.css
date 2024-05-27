@@ -253,6 +253,7 @@ dialog button {
 
 h1, h2, h3, h4, h5, h6 {
 	line-height: 2.5rem;
+	margin: 0;
 }
 
 /* --- */
@@ -409,10 +410,6 @@ h1, h2, h3, h4, h5, h6 {
 			display: flex;
 			flex-direction: row;
 
-			& > h3 {
-				margin: 0;
-			}
-
 			& > .count {
 				margin-left: auto;
 			}
@@ -469,7 +466,6 @@ h1, h2, h3, h4, h5, h6 {
 	& h2,
 	& h3 {
 		text-align: center;
-		margin: 0;
 	}
 
 	& button {
@@ -488,6 +484,16 @@ h1, h2, h3, h4, h5, h6 {
 		align-items: center;
 
 		gap: .5rem;
+	}
+}
+
+#index-main {
+	text-align: center;
+
+	& #current_url_qr {
+		aspect-ratio: 1 / 1;
+		object-fit: cover;
+		width: clamp(0px, 75vw, 256px);
 	}
 }
 
