@@ -21,9 +21,9 @@ logging.basicConfig(
 )
 
 # Load the summarizer and classifier
-logging.info("Loading the summarizer...")
+# logging.info("Loading the summarizer...")
 # summarizer = pipeline("summarization", model="philschmid/bart-large-cnn-samsum", truncation=True)
-logging.info("Done!")
+# logging.info("Done!")
 logging.info("Loading the classifier...")
 classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 logging.info("Done!")
@@ -44,7 +44,7 @@ async def classify_resume(file: UploadFile = File(...)):
     logging.info(f"Successfully saved file to {file_path}")
 
     # Process the resume and get the result
-    #result = process_resume(file_path)
+    # result = process_resume(file_path)
     result = await run_in_threadpool(process_resume, file_path)
 
     # Delete the file after processing
@@ -88,14 +88,14 @@ def process_resume(file_path):
         logging.info(f"Preprocessed text: {preprocessed_text}")
 
         # Summarize the text
-        #summary = summarizer(preprocessed_text, max_length=100, min_length=30)
-        #logging.info(f"Summary from the preprocessed text: {summary}")
+        # summary = summarizer(preprocessed_text, max_length=100, min_length=30)
+        # logging.info(f"Summary from the preprocessed text: {summary}")
 
-        #if not summary:
+        # if not summary:
         #    raise HTTPException(status_code=500, detail="Failed to summarize the text")
 
         # Classify the summary, calculate each label score independently
-        #output = classifier(summary[0]['summary_text'], candidate_labels, multi_label=True)
+        # output = classifier(summary[0]['summary_text'], candidate_labels, multi_label=True)
         output = classifier(preprocessed_text, candidate_labels, multi_label=True)
         if not output:
             raise HTTPException(status_code=500, detail="Failed to classify the summary")
@@ -154,14 +154,15 @@ async def classify_job_descriptions(job_descriptions: list[dict]):
             logging.info(f"Preprocessed job description: {preprocessed_text}")
 
             # Summarize the text
-            summary = summarizer(preprocessed_text, max_length=100, min_length=30)
-            logging.info(f"Summary from the job description: {summary}")
+            # summary = summarizer(preprocessed_text, max_length=100, min_length=30)
+            # logging.info(f"Summary from the job description: {summary}")
 
-            if not summary:
-                raise HTTPException(status_code=500, detail="Failed to summarize the text")
+            # if not summary:
+            #     raise HTTPException(status_code=500, detail="Failed to summarize the text")
 
             # Classify the summary
-            output = classifier(summary[0]['summary_text'], candidate_labels)
+            # output = classifier(summary[0]['summary_text'], candidate_labels)
+            output = classifier(preprocessed_text, candidate_labels, multi_label=True)
             if not output:
                 raise HTTPException(status_code=500, detail="Failed to classify the summary")
             logging.info(f"Classification: {output}")
