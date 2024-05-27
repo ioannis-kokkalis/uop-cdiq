@@ -18,3 +18,4 @@ COPY even-more-reqs.txt .
 RUN pip install --no-cache-dir -r even-more-reqs.txt
 
 
+RUN python -c "from transformers import pipeline; summarizer_gr = pipeline('zero-shot-classification', model='lighteternal/nli-xlm-r-greek')"
