@@ -176,10 +176,23 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 
 $a->body_main = function() { ?>
 
-	<!-- TODO dialog with HELP information like
-		to ensure order of interviews
-		submit one at a time
-	-->
+	<dialog id="dialog-asd9uih" class="info-dialog">
+		<p><strong>Add</strong>: interviewees by typing on their respective filter and the "option" to add will show. Same for interviewers but don't.</p>
+		<p><strong>Delete</strong>: no you don't.</p>
+		<p><strong>Booking Interviews</strong>: select the desired interviewee and the interviewers it requests an interview for, then click Update.</p>
+		<p><strong>Booking Interviews</strong>:To Unbook interviews, select an interviewee and deselect interviewers, then click Update. If an interviewer shows as disabled, the interviewee assigned to that interview has moved to Calling or further and you can no longer affect the interview directly.</p>
+		<p><strong>Preserve Interviews Order</strong>: when multi-selecting interviewers order of selection is not preserved. So by selecting and Update one interview at a time you guarantee order of interviews.</p>
+		<p><strong>Pause</strong>: the interviewee will no longer be available to get to Calling for any interview. If the interviewee was already in an interview, it will go back in queue and we will pretend the Calling never happened in the first place. Order of position in queue will be the same as before. When pausing or unpausing selected interviewers may show incorrectly, deselect and select the Interviewee again or refresh the page.</p>
+
+		<button onclick="document.getElementById('dialog-asd9uih').close();">Thanks!</button>
+	</dialog>
+
+	<div id="as8u9dji" class="horizontal_buttons">
+		<button id="9a8sdfuh" onclick="document.getElementById('dialog-asd9uih').showModal();
+			document.getElementById('dialog-asd9uih').scrollTo(0,0);"
+		>Information</button>
+		<button onclick="document.getElementById('as8u9dji').style.display = 'none';">Hide</button>
+	</div>
 
 	<form id="form"> <!-- submitting with JavaScript XMLHttpRequest -->
 		<!--  TODO (haha) maybe consider static form submission in case JS is disabled -->

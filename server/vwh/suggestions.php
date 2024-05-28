@@ -168,7 +168,8 @@ else {
 		}
 		?>
 
-		<p>Upload your resume (as .pdf or .docx) and we will suggest what interviewers (companies) are suited for you.</p>
+		<p>Upload your resume (pdf or docx) and we will recommend interviewers with job and intership positions that are suited for you.</p>
+		<h5 style="line-height: 1rem;">English resume versions are faster to process.</h5>
 		<form method="post" action="<?=$_SERVER['PHP_SELF']?>" enctype="multipart/form-data" onsubmit="processing_popup()">
 			<fieldset>
 				<legend>Your Resume</legend>
@@ -179,7 +180,7 @@ else {
 			</fieldset>
 		</form>
 		<p>Your resume will NOT be stored.</p>
-		<p><a href="https://careerday.fet.uop.gr/">I want to browse all jobs and interships!</a></p>
+		<p><a href="https://careerday.fet.uop.gr/">Explore all job and intership positions!</a></p>
 <?php
 	};
 }
