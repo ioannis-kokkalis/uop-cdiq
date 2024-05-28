@@ -7,6 +7,28 @@ $a = new AssemblerOperate('Gatekeeper');
 $a->operator_ensure(Operator::Gatekeeper);
 
 $a->body_main = function() { ?>
+
+	<dialog id="dialog-asd9uih" class="info-dialog">
+		<p>Click on interviewers to handle their current interview.</p>
+		<p>Pay attention when an interview has gone to Decision, and also when on Calling or Happening.</p>
+		<p>Your possible actions are:</p>
+		<ul>
+			<li><strong>Happening</strong>: when an interview is on Calling or Decision will move the interview to Happening, aka the interviewee arrives and goes on the interview.</li>
+			<li><strong>Completed</strong>: the interview is completed successfully and the interviewee is leaving.</li>
+			<li><strong>Dequeue</strong>: removes the interview. The related interviewee can enqueue again on that interviewer via Secretary.</li>
+			<li><strong>Pausing</strong>: will move the interviewer from whatever state (Avaliable, Calling, Decision, Happening) to Unavailable like it never started calling any interviewee. At any state except Avaliable, the related interviewee will go back in queue and we will pretend the Calling never happened in the first place. Interviewer will no longer be able to call next interviewee until unpaused.</li>
+		</ul>
+
+		<button onclick="document.getElementById('dialog-asd9uih').close();">Thanks!</button>
+	</dialog>
+
+	<div id="as8u9dji" class="horizontal_buttons">
+		<button id="9a8sdfuh" onclick="document.getElementById('dialog-asd9uih').showModal();
+			document.getElementById('dialog-asd9uih').scrollTo(0,0);"
+		>Information</button>
+		<button onclick="document.getElementById('as8u9dji').style.display = 'none';">Hide</button>
+	</div>
+
 	<div id="container_interviewers" class="container_interviewers">
 		<p id="no_interviewers_message">No Interviewers in the system.</p>
 	</div>

@@ -15,7 +15,8 @@ $a->body_main = function() { ?>
 
 	<h1>Interview where?</h1>
 
-	<p>TBD</p>
+	<p>Book your interviews at the <strong>Secretary</strong>, then pay attention on the interview updates. If any is for you, head to the <strong>Gatekeeper</strong> to guide you!</p>
+	<h6 style="line-height: 1rem;">Your priority on interview queues is determined by the time you booked your interview.</h6>
 
 	<h1>Share</h1>
 	
@@ -23,7 +24,7 @@ $a->body_main = function() { ?>
 	<script src="/script/utilities.js"></script>
 	<img id="current_url_qr" alt="...it did not generated properly...">
 	<script>qr_generate(window.location.href, document.getElementById('current_url_qr'));</script>
-	<p>...or <a href="#3werf" id="3werf">copy the link</a> and send it!</p>
+	<p>...or <a target="_self" onclick="copy_to_clipboard(window.location.href)">copy the link</a> and send it!</p>
 <?php };
 
 $a->assemble();
