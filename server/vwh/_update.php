@@ -12,7 +12,7 @@ if (isset($_GET) === false) {
 
 # ---
 
-define('CALLING_TIME_IN_SECONDS', 20); // TODO!!! change it to "3 * 60" seconds after testing
+define('CALLING_TIME_IN_SECONDS', (3 * 60));
 
 enum Parameter : string {
 	case AM_I_UP_TO_DATE = 'am_i_up_to_date';

@@ -1,0 +1,21 @@
+FROM python:3.11
+
+# Set the working directory in the container
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY more-reqs.txt .
+RUN pip install --no-cache-dir -r more-reqs.txt
+
+# preload the models
+RUN python -c "from transformers import pipeline; classifier = pipeline('zero-shot-classification', model='facebook/bart-large-mnli')"
+RUN python -c "from transformers import pipeline; summarizer = pipeline('summarization', model='philschmid/bart-large-cnn-samsum')"
+RUN python -c "from transformers import pipeline; translator = pipeline('translation', model='Helsinki-NLP/opus-mt-grk-en')"
+
+COPY even-more-reqs.txt .
+RUN pip install --no-cache-dir -r even-more-reqs.txt
+
+
+RUN python -c "from transformers import pipeline; summarizer_gr = pipeline('zero-shot-classification', model='lighteternal/nli-xlm-r-greek')"

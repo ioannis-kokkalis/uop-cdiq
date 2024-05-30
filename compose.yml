@@ -1,5 +1,4 @@
 services:
-  
   dbms:
     build:
       context: ./dbms
@@ -9,7 +8,8 @@ services:
       POSTGRES_PASSWORD: ${DBMS_PASSWORD}
     volumes:
       - ./dbms/vlpd:/var/lib/postgresql/data
-  
+    restart: unless-stopped
+
   server:
     depends_on:
       - dbms
@@ -31,4 +31,16 @@ services:
       SERVER_SSL_CERT_FILE: ${SERVER_SSL_CERT_FILE}
       SERVER_SSL_PKEY_FILE: ${SERVER_SSL_PKEY_FILE}
     volumes:
-      - ./server/vwh:/var/www/html/
+       - ./server/vwh:/var/www/html/
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./suggestions-api
+      dockerfile: DockerfileAPI
+    expose:
+      - 8000
+    volumes:
+      - ./suggestions-api/src:/app
+    restart: unless-stopped
+    command: uvicorn api:app --host 0.0.0.0 --port 8000 --workers 1

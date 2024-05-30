@@ -14,14 +14,15 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 
 	$interviewer_id = null;
 
-	function something_went_wrong() {
+	function something_went_wrong(string $reason = 'unknown') {
 		global $interviewer_id;
+		# echo $reason;
 		header("Location: /costas/secretary.php?err".($interviewer_id !== 'null' ? "&interviewer_id={$interviewer_id}" : ''));
 		exit(0);
 	};
 
 	if(($interviewer_id = $_GET['interviewer_id'] ?? 'null') === 'null') {
-		something_went_wrong();
+		something_went_wrong('no id');
 	}
 
 	require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/database.php';
@@ -36,7 +37,7 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 		$new_position_description = $_POST['new_position_description'] ?? false;
 		
 		if($new_position_title === false || $new_position_description === false) {
-			something_went_wrong();
+			something_went_wrong('missing data');
 		}
 		
 		$interviewer_id = intval($interviewer_id);
@@ -47,14 +48,14 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 			|| $new_position_description === ''
 			|| $db->insert_job($new_position_title, $new_position_description, $interviewer_id) === false
 		) {
-			something_went_wrong();
+			something_went_wrong('incomplete data or db error');
 		}
 	}
 	else if(isset($_POST) && isset($_POST['submit_delete'])
 		&& isset($_POST['job_id']) && $_POST['job_id'] !== 'null'
 	) {
 		if($db->delete_job(intval($_POST['job_id'])) === false) {
-			something_went_wrong();
+			something_went_wrong('failed to delete job');
 		}
 		
 	}
@@ -62,7 +63,7 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 		$interviewer = $db->retrieve_jobs_of($interviewer_id, true);
 
 		if($interviewer === false || is_array($interviewer) === false) {
-			something_went_wrong();
+			something_went_wrong('cant retrieve jobs');
 		}
 		
 		$jobs_id_description = $interviewer['jobs'];
@@ -75,33 +76,32 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 		}
 
 		if(sizeof($jobs_id_description) <= 0) {
-			something_went_wrong();
+			something_went_wrong('no jobs to tag');
 		}
 
-		// $curl = curl_init();
+		$curl = curl_init();
 
-		// curl_setopt_array($curl, [
-		// 	CURLOPT_URL => "https://api/kati",
-		// 	CURLOPT_RETURNTRANSFER => true,
-		// 	CURLOPT_ENCODING => "",
-		// 	CURLOPT_MAXREDIRS => 10,
-		// 	CURLOPT_TIMEOUT => 30,
-		// 	CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-		// 	CURLOPT_CUSTOMREQUEST => "POST",
-		// 	CURLOPT_POSTFIELDS => json_encode($jobs_id_description),
-		// 	CURLOPT_HTTPHEADER => [
-		// 		"Content-Type: application/json"
-		// 	],
-		// ]);
+		curl_setopt_array($curl, [
+			CURLOPT_PORT => "8000",
+			CURLOPT_URL => "http://api/classify_job_descriptions",
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_ENCODING => "",
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 0,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_CUSTOMREQUEST => "POST",
+			CURLOPT_POSTFIELDS => json_encode($jobs_id_description),
+			CURLOPT_HTTPHEADER => [
+				"Content-Type: application/json"
+			],
+		]);
+		
+		$response = curl_exec($curl);
+		if ($x = curl_error($curl)) {
+			something_went_wrong('curl: '.$x);
+		}
 
-		// $response = curl_exec($curl);
-		// if (curl_error($curl)) {
-		// 	something_went_wrong();
-		// }
-
-		// curl_close($curl);
-
-		$response = '[{"id":"15","tag":"information & technology"},{"id":"2","tag":"information & technology"}, {"id":"16","tag":"ggg"}]';
+		curl_close($curl);
 
 		$response = json_decode($response, true);
 
@@ -116,7 +116,7 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 		}
 
 		if($db->update_jobs_tags($tag_job_ids) === false) {
-			something_went_wrong();
+			something_went_wrong('cant update job tags');
 		}
 	}
 	else {
@@ -131,7 +131,7 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 	$interviewer = $db->retrieve_jobs_of($interviewer_id);
 	
 	if($interviewer === false || is_array($interviewer) === false) {
-		something_went_wrong();
+		something_went_wrong('cant retrieve interviewer details');
 	}
 
 	$a->body_main = function () use ($interviewer) { ?>
@@ -177,10 +177,23 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 
 $a->body_main = function() { ?>
 
-	<!-- TODO dialog with HELP information like
-		to ensure order of interviews
-		submit one at a time
-	-->
+	<dialog id="dialog-asd9uih" class="info-dialog">
+		<p><strong>Add</strong>: interviewees by typing on their respective filter and the "option" to add will show. Same for interviewers but don't.</p>
+		<p><strong>Delete</strong>: no you don't.</p>
+		<p><strong>Booking Interviews</strong>: select the desired interviewee and the interviewers it requests an interview for, then click Update.</p>
+		<p><strong>Booking Interviews</strong>:To Unbook interviews, select an interviewee and deselect interviewers, then click Update. If an interviewer shows as disabled, the interviewee assigned to that interview has moved to Calling or further and you can no longer affect the interview directly.</p>
+		<p><strong>Preserve Interviews Order</strong>: when multi-selecting interviewers order of selection is not preserved. So by selecting and Update one interview at a time you guarantee order of interviews.</p>
+		<p><strong>Pause</strong>: the interviewee will no longer be available to get to Calling for any interview. If the interviewee was already in an interview, it will go back in queue and we will pretend the Calling never happened in the first place. Order of position in queue will be the same as before. When pausing or unpausing selected interviewers may show incorrectly, deselect and select the Interviewee again or refresh the page.</p>
+
+		<button onclick="document.getElementById('dialog-asd9uih').close();">Thanks!</button>
+	</dialog>
+
+	<div id="as8u9dji" class="horizontal_buttons">
+		<button id="9a8sdfuh" onclick="document.getElementById('dialog-asd9uih').showModal();
+			document.getElementById('dialog-asd9uih').scrollTo(0,0);"
+		>Information</button>
+		<button onclick="document.getElementById('as8u9dji').style.display = 'none';">Hide</button>
+	</div>
 
 	<form id="form"> <!-- submitting with JavaScript XMLHttpRequest -->
 		<!--  TODO (haha) maybe consider static form submission in case JS is disabled -->

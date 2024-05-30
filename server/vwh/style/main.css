@@ -59,6 +59,10 @@ a:hover {
 	text-decoration: underline;
 }
 
+button {
+	padding: .5rem;
+}
+
 header, footer, main, nav, hr {
 	width: 100%;
 }
@@ -171,6 +175,8 @@ form textarea {
 }
 
 form input[type="file"] {
+	width: 60dvw;
+	max-width: min-content;
 	padding: 0;
 }
 
@@ -251,6 +257,7 @@ dialog button {
 
 h1, h2, h3, h4, h5, h6 {
 	line-height: 2.5rem;
+	margin: 0;
 }
 
 /* --- */
@@ -407,10 +414,6 @@ h1, h2, h3, h4, h5, h6 {
 			display: flex;
 			flex-direction: row;
 
-			& > h3 {
-				margin: 0;
-			}
-
 			& > .count {
 				margin-left: auto;
 			}
@@ -457,6 +460,83 @@ h1, h2, h3, h4, h5, h6 {
 				color: var(--color-status--completed);
 			}
 		}
+	}
+}
+
+#suggestions-main {
+
+	& p,
+	& h1, 
+	& h2,
+	& h3 {
+		text-align: center;
+	}
+
+	& button {
+		padding: .5rem;
+	}
+
+	& #current_url_qr {
+		aspect-ratio: 1 / 1;
+		object-fit: cover;
+		width: clamp(0px, 75vw, 256px);
+	}
+
+	& > .interviewer {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+
+		gap: .5rem;
+	}
+}
+
+#index-main {
+	text-align: center;
+
+	& #current_url_qr {
+		aspect-ratio: 1 / 1;
+		object-fit: cover;
+		width: clamp(0px, 75vw, 256px);
+	}
+}
+
+.info-dialog {
+	& p {
+		text-align: left;
+	}
+
+	& ul {
+		display: flex;
+		flex-direction: column;
+		gap: .5rem;
+
+		margin: 0;
+	}
+
+	& .av {
+		color: var(--color-white);
+		background-color: var(--color-status--available);
+	}
+
+	& .ca {
+		color: var(--color-white);
+		background-color: var(--color-status--calling);
+	}
+
+	& .de {
+		color: var(--color-white);
+		background-color: var(--color-status--decision);
+	}
+
+	& .ha {
+		color: var(--color-white);
+		background-color: var(--color-status--happening);
+	}
+
+	& .pa {
+		color: var(--color-white);
+		background-color: var(--color-status--unavailable);
 	}
 }
 
