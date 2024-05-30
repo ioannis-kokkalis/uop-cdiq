@@ -115,7 +115,7 @@ else if(isset($_GET['tags'])) {
 		if(sizeof($jobs) === 0) {
 ?>
 			<p>It seems that there are no jobs or internships to recommend.</p>
-			<p>Don't worry, this might be an issue on our service. You can always explore <a href="https://careerday.fet.uop.gr/">all related jobs & interships</a>!</p>
+			<p>Don't worry, this might be an issue on our service. You can always explore <a href="https://careerday.fet.uop.gr/">all related job & intership positions</a>!</p>
 <?php
 			return;
 		}
@@ -169,7 +169,7 @@ else {
 		?>
 
 		<p>Upload your resume (pdf or docx) and we will recommend interviewers with job and intership positions that are suited for you.</p>
-		<h5 style="line-height: 1rem;">English resume versions are faster to process.</h5>
+		<h5 style="line-height: 1rem; text-align: center;">English resume versions are faster to process and produce more accurate results.</h5>
 		<form method="post" action="<?=$_SERVER['PHP_SELF']?>" enctype="multipart/form-data" onsubmit="processing_popup()">
 			<fieldset>
 				<legend>Your Resume</legend>
@@ -180,7 +180,8 @@ else {
 			</fieldset>
 		</form>
 		<p>Your resume will NOT be stored.</p>
-		<p><a href="https://careerday.fet.uop.gr/">Explore all job and intership positions!</a></p>
+		<a href="https://careerday.fet.uop.gr/">Explore all job and intership positions!</a>
+		<p>This feature is experimental, you should always do your own research as well.</p>
 <?php
 	};
 }

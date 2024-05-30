@@ -14,14 +14,15 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 
 	$interviewer_id = null;
 
-	function something_went_wrong() {
+	function something_went_wrong(string $reason = 'unknown') {
 		global $interviewer_id;
+		# echo $reason;
 		header("Location: /costas/secretary.php?err".($interviewer_id !== 'null' ? "&interviewer_id={$interviewer_id}" : ''));
 		exit(0);
 	};
 
 	if(($interviewer_id = $_GET['interviewer_id'] ?? 'null') === 'null') {
-		something_went_wrong();
+		something_went_wrong('no id');
 	}
 
 	require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/database.php';
@@ -36,7 +37,7 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 		$new_position_description = $_POST['new_position_description'] ?? false;
 		
 		if($new_position_title === false || $new_position_description === false) {
-			something_went_wrong();
+			something_went_wrong('missing data');
 		}
 		
 		$interviewer_id = intval($interviewer_id);
@@ -47,14 +48,14 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 			|| $new_position_description === ''
 			|| $db->insert_job($new_position_title, $new_position_description, $interviewer_id) === false
 		) {
-			something_went_wrong();
+			something_went_wrong('incomplete data or db error');
 		}
 	}
 	else if(isset($_POST) && isset($_POST['submit_delete'])
 		&& isset($_POST['job_id']) && $_POST['job_id'] !== 'null'
 	) {
 		if($db->delete_job(intval($_POST['job_id'])) === false) {
-			something_went_wrong();
+			something_went_wrong('failed to delete job');
 		}
 		
 	}
@@ -62,7 +63,7 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 		$interviewer = $db->retrieve_jobs_of($interviewer_id, true);
 
 		if($interviewer === false || is_array($interviewer) === false) {
-			something_went_wrong();
+			something_went_wrong('cant retrieve jobs');
 		}
 		
 		$jobs_id_description = $interviewer['jobs'];
@@ -75,7 +76,7 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 		}
 
 		if(sizeof($jobs_id_description) <= 0) {
-			something_went_wrong();
+			something_went_wrong('no jobs to tag');
 		}
 
 		$curl = curl_init();
@@ -96,8 +97,8 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 		]);
 		
 		$response = curl_exec($curl);
-		if (curl_error($curl)) {
-			something_went_wrong();
+		if ($x = curl_error($curl)) {
+			something_went_wrong('curl: '.$x);
 		}
 
 		curl_close($curl);
@@ -115,7 +116,7 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 		}
 
 		if($db->update_jobs_tags($tag_job_ids) === false) {
-			something_went_wrong();
+			something_went_wrong('cant update job tags');
 		}
 	}
 	else {
@@ -130,7 +131,7 @@ if (isset($_GET['interviewer_id'])) { // interviewer job positions management
 	$interviewer = $db->retrieve_jobs_of($interviewer_id);
 	
 	if($interviewer === false || is_array($interviewer) === false) {
-		something_went_wrong();
+		something_went_wrong('cant retrieve interviewer details');
 	}
 
 	$a->body_main = function () use ($interviewer) { ?>

@@ -67,7 +67,8 @@ async def classify_resume(file: UploadFile = File(...)):
     # Save the file to a temporary location
     file_path = f"/tmp/{file.filename}"
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        # shutil.copyfileobj(file.file, buffer)
+        await run_in_threadpool(shutil.copyfileobj, file.file, buffer)
 
     # Ensure file is saved properly
     if not os.path.exists(file_path):
@@ -75,7 +76,8 @@ async def classify_resume(file: UploadFile = File(...)):
     logging.info(f"Successfully saved file to {file_path}")
 
     # Process the resume and get the result
-    result = await run_in_threadpool(process_resume, file_path)
+    # result = await run_in_threadpool(process_resume, file_path)
+    result = process_resume(file_path)
 
     # Delete the file after processing
     os.remove(file_path)
