@@ -242,6 +242,7 @@ class SecretaryAddInterviewer extends UpdateRequest {
 
 			$this->iwer_image_resource_url = $url = SecretaryAddInterviewer::$iwer_image_resource_url_base . uniqid("i");
 
+			# TODO give the images/resources dir privilages to whatever apache has
 			if (move_uploaded_file($iwer_image_file['tmp_name'], $_SERVER['DOCUMENT_ROOT'] . $url) === false) {
 				throw new Exception("unable to store the image permanently");
 			}
