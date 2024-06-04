@@ -25,8 +25,4 @@ COPY ./pkey "$SERVER_SSL_PKEY_FILE"
 COPY ./conf /etc/apache2/sites-available/000-default.conf
 RUN a2ensite 000-default && a2dissite default-ssl
 
-# Restart Apache to apply changes
-RUN service apache2 restart
-
-# Make the ports 80 and 443 available to the world outside this container
-EXPOSE 80 443
+# END
