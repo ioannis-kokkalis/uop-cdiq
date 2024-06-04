@@ -4,8 +4,8 @@ services:
       context: ./dbms
       dockerfile: Dockerfile
     environment:
-      POSTGRES_USER: ${DBMS_USERNAME}
-      POSTGRES_PASSWORD: ${DBMS_PASSWORD}
+      POSTGRES_USER: "${DBMS_USERNAME}"
+      POSTGRES_PASSWORD: "${DBMS_PASSWORD}"
     volumes:
       - ./dbms/vlpd:/var/lib/postgresql/data
     restart: unless-stopped
@@ -16,20 +16,20 @@ services:
     build:
       context: ./server
       args:
-        SERVER_SSL_CERT_FILE: ${SERVER_SSL_CERT_FILE}
-        SERVER_SSL_PKEY_FILE: ${SERVER_SSL_PKEY_FILE}
-      dockerfile: Dockerfile 
+        SERVER_SSL_CERT_FILE: "${SERVER_SSL_CERT_FILE}"
+        SERVER_SSL_PKEY_FILE: "${SERVER_SSL_PKEY_FILE}"
+      dockerfile: Dockerfile
     ports:
       - 80:80
       - 443:443
     environment:
       DB_HOST: dbms
-      DB_USERNAME: ${DBMS_USERNAME}
-      DB_PASSWORD: ${DBMS_PASSWORD}
-      DB_NAME: ${DBMS_DATABASE}
-      SERVER_NAME: ${SERVER_NAME}
-      SERVER_SSL_CERT_FILE: ${SERVER_SSL_CERT_FILE}
-      SERVER_SSL_PKEY_FILE: ${SERVER_SSL_PKEY_FILE}
+      DB_USERNAME: "${DBMS_USERNAME}"
+      DB_PASSWORD: "${DBMS_PASSWORD}"
+      DB_NAME: "${DBMS_DATABASE}"
+      SERVER_NAME: "${SERVER_NAME}"
+      SERVER_SSL_CERT_FILE: "${SERVER_SSL_CERT_FILE}"
+      SERVER_SSL_PKEY_FILE: "${SERVER_SSL_PKEY_FILE}"
     volumes:
        - ./server/vwh:/var/www/html/
     restart: unless-stopped
