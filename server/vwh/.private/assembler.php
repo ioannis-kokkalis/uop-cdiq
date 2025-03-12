@@ -14,7 +14,7 @@ class Assembler {
 	public Closure		$body_main;
 
 	public function __construct(string $body_header_title) {
-		$this->head_title = 'UoP CDIQ 2024';
+		$this->head_title = 'UoP CDIQ 2025';
 		$this->head_stylesheet = Stylesheet::Main;
 
 		$this->body_header_title = $body_header_title;
@@ -77,7 +77,7 @@ class Assembler {
 
 		<footer>
 			<p style="text-align: center;">
-				<a href="https://www.uop.gr/">University of the Peloponnese</a> © Career Day 2024 Interviews
+				<a href="https://www.uop.gr/">University of the Peloponnese</a> © Career Day 2025 Interviews
 			</p>
 		</footer>
 

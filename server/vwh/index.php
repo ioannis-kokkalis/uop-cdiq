@@ -2,7 +2,7 @@
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
 
-$a = new Assembler('Career Day 2024<br>Interviews');
+$a = new Assembler('Career Day 2025<br>Interviews');
 
 $a->body_main_id = 'index-main';
 
