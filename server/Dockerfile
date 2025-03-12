@@ -25,6 +25,7 @@ COPY ./pkey "$SERVER_SSL_PKEY_FILE"
 COPY ./conf /etc/apache2/sites-available/000-default.conf
 RUN a2ensite 000-default && a2dissite default-ssl
 
-RUN chown -R www-data:www-data /var/www/html/resources/images/interviewer
+CMD chown -R www-data:www-data /var/www/html/resources/images/interviewer \
+    && apache2-foreground
 
 # END
