@@ -1,6 +1,6 @@
 # Guide to Run
 
-Edit the values of the placeholders at ```.env``` file.
+Edit the values of the placeholders at ```.env``` file. Avoid capital letters on DBMS variables for database and username.
 
 Move your **certificate** and **private key** inside ```server/``` named ```cert``` and ```pkey``` respectively.
 
