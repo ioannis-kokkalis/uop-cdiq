@@ -1,7 +1,7 @@
 <?php
 
 enum Stylesheet : string {
-	case Main = "/style/main.css";
+	case Main = "/style/main.php";
 }
 
 class Assembler {
@@ -14,7 +14,7 @@ class Assembler {
 	public Closure		$body_main;
 
 	public function __construct(string $body_header_title) {
-		$this->head_title = 'UoP CDIQ 2025';
+		$this->head_title = 'UoP CNDIQ 2025';
 		$this->head_stylesheet = Stylesheet::Main;
 
 		$this->body_header_title = $body_header_title;
@@ -40,11 +40,11 @@ class Assembler {
 		?>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<link rel="stylesheet" href="<?= $this->head_stylesheet->value ?>">
-		<link rel="shortcut icon" href="/resources/favicon/normal.svg" type="image/x-icon">
+		<link rel="stylesheet" href="<?= $this->head_stylesheet->value ?>?cachebuster=<?= date("YmdH") ?>">
+		<link rel="shortcut icon" href="/resources/favicon/normal.svg?cachebuster=<?= date("YmdH") ?>" type="image/x-icon">
 		<?php if((mt_rand() / mt_getrandmax()) >  0.99) { ?>
-			<link rel="stylesheet" href="/style/color-shiny.css">
-			<link rel="shortcut icon" href="/resources/favicon/shiny.svg" type="image/x-icon">
+			<link rel="stylesheet" href="/style/color-shiny.css?cachebuster=<?= date("YmdH") ?>">
+			<link rel="shortcut icon" href="/resources/favicon/shiny.svg?cachebuster=<?= date("YmdH") ?>" type="image/x-icon">
 		<?php } ?>
 		<title><?= $this->head_title ?></title>
 		<?php
@@ -77,7 +77,7 @@ class Assembler {
 
 		<footer>
 			<p style="text-align: center;">
-				<a href="https://www.uop.gr/">University of the Peloponnese</a> © Career Day 2025 Interviews
+				<a href="https://www.uop.gr/">University of the Peloponnese</a> © Career &#38; Networking Day Interviews Queueing 2025
 			</p>
 		</footer>
 
@@ -131,7 +131,7 @@ class AssemblerOperate extends Assembler {
 			}
 			
 			if(sizeof($operators) > 0) {
-				echo '<hr>' . implode($operators);
+				echo '<div style="width: 100%"></div>' . implode($operators);
 			}
 		?>
 		<?php
@@ -176,6 +176,25 @@ class AssemblerOperate extends Assembler {
 	function operator_clear() {
 		unset($_SESSION[AssemblerOperate::$SESSION_OPERATOR_ARRAY]);
 		$_SESSION[AssemblerOperate::$SESSION_OPERATOR_ARRAY] = [];
+	}
+
+}
+
+class AssemblerOperateSecretary extends AssemblerOperate {
+
+	public function __construct() {
+		parent::__construct("Secretary");
+	}
+
+	protected function head() : void {
+		parent::head();
+		?>
+		<style>
+			html {
+				scrollbar-gutter: stable both-edges;
+			}
+		</style>
+		<?php
 	}
 
 }

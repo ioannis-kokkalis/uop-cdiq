@@ -1,10 +1,12 @@
+<?php header("Content-type: text/css"); ?>
+
 /* Notes: 
 mobile first with small fixes for larger screens
 */
 
 @import url("/style/font.css");
 
-@import url("/style/color.css");
+@import url("/style/color.css?cachebuster=<?= date("YmdH") ?>");
 
 ::selection {
 	background-color: var(--color-primary);
@@ -43,9 +45,8 @@ body {
 }
 
 hr {
-	margin: .8rem 0;
-	border: 1px solid #5f5f5f;
-	border-radius: 1rem;
+	margin: .5rem 0;
+	border: none;
 }
 
 a,
@@ -53,6 +54,8 @@ a:visited {
 	text-decoration: none;
 	
 	color: var(--color-accent);
+
+	font-weight: bold;
 }
 
 a:hover {
@@ -113,6 +116,11 @@ header, footer {
 		margin: 0;
 		
 		color: var(--color-white);
+
+		&::selection {
+			background-color: var(--color-white);
+			color: var(--color-primary);
+		}
 	}
 }
 

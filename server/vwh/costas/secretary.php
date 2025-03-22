@@ -2,7 +2,7 @@
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/.private/assembler.php';
 
-$a = new AssemblerOperate('Secretary');
+$a = new AssemblerOperateSecretary();
 
 $a->operator_ensure(Operator::Secretary);
 
